@@ -36,7 +36,7 @@ local UnnecessaryFrames = {
     GearManagerDialogBottomLeft,
     GearManagerDialogLeft,
     GearManagerDialogTopLeft,
-}
+};
 function MCF_CleanDefaultFrame()
     for _, frame in pairs(UnnecessaryFrames) do
         if ( frame ) then
