@@ -58,7 +58,11 @@ if (GetLocale() == "enUS") then
     L["MCF_CR_ARMOR_PENETRATION_TOOLTIP"] = "Reduces enemy armor (only for your attacks).\nArmor Penetration Rating: %d (enemy armor reduced for %.2f%%).";
     L["MCF_SPELL_PENETRATION_TOOLTIP"] = SPELL_PENETRATION_TOOLTIP;
     L["MCF_CR_EXPERTISE_TOOLTIP"] = CR_EXPERTISE_TOOLTIP;
-    L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"] = "Excluding talents effect.";
+    L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"] = "|cff888888(Excluding talent effects)|r";
+    L["MCF_CRIT_HIT_TAKEN_CHANCE"] = "Chance to be critically hit";
+    L["MCF_STAT_ENEMY_LEVEL"] = "Enemy Level";
+    L["MCF_TALENT_EFFECTS_ACTIVE"] = "Talent effects active:";
+    L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"] = "Chance to be critically hit redused by %d%%";
 
     L["MCF_STAT_AVERAGE_ITEM_LEVEL"] = STAT_AVERAGE_ITEM_LEVEL;
     L["MCF_STAT_AVERAGE_ITEM_LEVEL_EQUIPPED"] = STAT_AVERAGE_ITEM_LEVEL_EQUIPPED;
