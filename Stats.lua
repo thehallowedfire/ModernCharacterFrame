@@ -440,12 +440,14 @@ function MCF_ColorPaperDollStat(base, posBuff, negBuff)
 	return stat;
 end
 
-function MCF_PaperDollFormatStat(name, base, posBuff, negBuff, frame, textString)
+function MCF_PaperDollFormatStat(name, base, posBuff, negBuff, frame, textString, result)
 	local effective = max(0,base + posBuff + negBuff);
 	local text = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT,name).." "..effective;
 	if ( ( posBuff == 0 ) and ( negBuff == 0 ) ) then
 		text = text..FONT_COLOR_CODE_CLOSE;
-		textString:SetText(effective);
+		if (not result) then
+			textString:SetText(effective);
+		end
 	else 
 		if ( posBuff > 0 or negBuff < 0 ) then
 			text = text.." ("..base..FONT_COLOR_CODE_CLOSE;
@@ -463,12 +465,24 @@ function MCF_PaperDollFormatStat(name, base, posBuff, negBuff, frame, textString
 		-- if there is a negative buff then show the main number in red, even if there are
 		-- positive buffs. Otherwise show the number in green
 		if ( negBuff < 0 ) then
-			textString:SetText(RED_FONT_COLOR_CODE..effective..FONT_COLOR_CODE_CLOSE);
+			if (not result) then
+				textString:SetText(RED_FONT_COLOR_CODE..effective..FONT_COLOR_CODE_CLOSE);
+			else
+				effective = RED_FONT_COLOR_CODE..effective..FONT_COLOR_CODE_CLOSE;
+			end
 		else
-			textString:SetText(GREEN_FONT_COLOR_CODE..effective..FONT_COLOR_CODE_CLOSE);
+			if (not result) then
+				textString:SetText(GREEN_FONT_COLOR_CODE..effective..FONT_COLOR_CODE_CLOSE);
+			else
+				effective = GREEN_FONT_COLOR_CODE..effective..FONT_COLOR_CODE_CLOSE;
+			end
 		end
 	end
-	frame.tooltip = text;
+	if (not result) then
+		frame.tooltip = text;
+	else
+		return effective, text;
+	end
 end
 
 function MCF_ComputePetBonus(stat, value)
@@ -787,8 +801,8 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
 	end
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
-	GameTooltip:AddLine(L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"]);
 	GameTooltip:AddLine(format(STAT_HIT_SPELL_TOOLTIP, GetCombatRating(CR_HIT_SPELL), GetCombatRatingBonus(CR_HIT_SPELL)));
+	GameTooltip:AddLine(L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"]);
 	GameTooltip:AddLine(" ");
 	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 	local playerLevel = UnitLevel("player");
@@ -990,6 +1004,33 @@ function MCF_GetSpellMissChance(levelOffset, special)
 	end
 	local chance = MCF_BASE_MISS_CHANCE_SPELL[levelOffset];
 	chance = chance - GetCombatRatingBonus(CR_HIT_SPELL);--[[  - GetSpellHitModifier(); ]] --MCFFIX this function gives another result
+	if (chance < 0) then
+		chance = 0;
+	elseif (chance > 100) then
+		chance = 100;
+	end
+	return chance;
+end
+
+function MCF_GetCritHitTakenChance(levelOffset, special)
+	if (levelOffset < 0 or levelOffset > 3) then
+		return 0;
+	end
+	local chance = MCF_BASE_CRIT_HIT_TAKEN_CHANCE[levelOffset];
+	local currentDef = UnitDefense("player");
+	local defDifference = UnitLevel("player") * 5 - currentDef;
+	local critChanceFromResilience = GetCombatRatingBonus(CR_RESILIENCE_CRIT_TAKEN);
+
+	local _, class = UnitClass("player");
+	local druidTalentPercent = 0;
+	if ( class == "DRUID" ) then
+		local _,_,_,_, rank = GetTalentInfo(2, 18);
+		if (rank > 0) then
+			druidTalentPercent = rank * 2;
+		end
+	end
+
+	chance = chance - GetDodgeBlockParryChanceFromDefense() - critChanceFromResilience - druidTalentPercent + defDifference * 0.04;
 	if (chance < 0) then
 		chance = 0;
 	elseif (chance > 100) then
@@ -1347,6 +1388,91 @@ function MCF_PaperDollFrame_SetArmor(statFrame, unit)
 		end
 	end
 	
+	statFrame:Show();
+end
+
+function MCF_Defense_OnEnter(statFrame)
+	if (MOVING_STAT_CATEGORY) then
+		return;
+	end
+
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+
+	local base, modifier = UnitDefense("player");
+	local defensePercent = GetDodgeBlockParryChanceFromDefense();
+	local CritHitTakenChance = GetCombatRatingBonus(CR_DEFENSE_SKILL);
+
+	local posBuff = 0;
+	local negBuff = 0;
+	if ( modifier > 0 ) then
+		posBuff = modifier;
+	elseif ( modifier < 0 ) then
+		negBuff = modifier;
+	end
+
+	if (CritHitTakenChance >= 0) then
+		CritHitTakenChance = format("+%.2F%%", CritHitTakenChance);
+	else
+		CritHitTakenChance = RED_FONT_COLOR_CODE..format("%.2F%%", CritHitTakenChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	
+	local _, defenseText = MCF_PaperDollFormatStat(DEFENSE, base, posBuff, negBuff, statFrame, text, true);
+
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..defenseText..FONT_COLOR_CODE_CLOSE);
+
+	GameTooltip:AddLine(format(DEFAULT_STATDEFENSE_TOOLTIP, GetCombatRating(CR_DEFENSE_SKILL), GetCombatRatingBonus(CR_DEFENSE_SKILL), defensePercent, defensePercent));
+	GameTooltip:AddLine(" ");
+
+	local _, class = UnitClass("player");
+	if ( class == "DRUID" and true ) then
+		local talentName, icon, _, _, rank = GetTalentInfo(2, 18);
+		if (rank > 0) then
+			icon = "Interface\\Icons\\Ability_Druid_Enrage";
+			local talentPercent = rank * 2;
+
+			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"], talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+			GameTooltip:AddTexture(icon);
+			GameTooltip:AddLine(" ");
+		end
+	end
+
+	GameTooltip:AddDoubleLine(L["MCF_STAT_ENEMY_LEVEL"], L["MCF_CRIT_HIT_TAKEN_CHANCE"], HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local critHitTakenChance = format("%.2F%%", MCF_GetCritHitTakenChance(i));
+		local level = playerLevel + i;
+			if (playerLevel == 80 and i == 3) then
+				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+			end
+		GameTooltip:AddDoubleLine("      "..level, critHitTakenChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+		
+	GameTooltip:Show();
+end
+
+function MCF_PaperDollFrame_SetDefense(statFrame, unit)
+	if (unit ~= "player") then
+		statFrame:Hide();
+		return;
+	end
+
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, DEFENSE));
+	local text = _G[statFrame:GetName().."StatText"];
+
+	local base, modifier = UnitDefense("player");
+	local posBuff = 0;
+	local negBuff = 0;
+	if ( modifier > 0 ) then
+		posBuff = modifier;
+	elseif ( modifier < 0 ) then
+		negBuff = modifier;
+	end
+	
+	local effective = MCF_PaperDollFormatStat(DEFENSE, base, posBuff, negBuff, statFrame, text, true);
+	text:SetText(effective);
+
+	statFrame:SetScript("OnEnter", MCF_Defense_OnEnter);
 	statFrame:Show();
 end
 

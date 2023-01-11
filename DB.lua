@@ -171,6 +171,9 @@ MCF_PAPERDOLL_STATINFO = {
 	["ARMOR"] = {
 		updateFunc = function(statFrame, unit) MCF_PaperDollFrame_SetArmor(statFrame, unit); end
 	},
+	["DEFENSE"] = {
+		updateFunc = function(statFrame, unit) MCF_PaperDollFrame_SetDefense(statFrame, unit); end
+	},
 	["DODGE"] = {
 		updateFunc = function(statFrame, unit) MCF_PaperDollFrame_SetDodge(statFrame, unit); end
 	},
@@ -281,7 +284,8 @@ MCF_PAPERDOLL_STATCATEGORIES = {
 	["DEFENSE"] = {
 			id = 6,
 			stats = {
-				"ARMOR", 
+				"ARMOR",
+				"DEFENSE",
 				"DODGE",
 				"PARRY", 
 				"BLOCK",
@@ -341,6 +345,13 @@ MCF_BASE_ENEMY_PARRY_CHANCE = {
 };
 
 MCF_DUAL_WIELD_HIT_PENALTY = 19.0;
+
+MCF_BASE_CRIT_HIT_TAKEN_CHANCE = {
+	[0] = 5.0;
+	[1] = 5.2;
+	[2] = 5.4;
+	[3] = 5.6;
+};
 
 -- Unused for now, keep in case decide to improve SpellHit tooltip
 MCF_TALENTS_FOR_SPELLHIT = {
