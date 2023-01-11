@@ -52,7 +52,7 @@ if (GetLocale() == "ruRU") then
     L["MCF_CR_ARMOR_PENETRATION_TOOLTIP"] = "Снижение брони противника (только для ваших атак).\nРейтинг: %d (броня противника уменьшена на %.2f%%).";
     L["MCF_SPELL_PENETRATION_TOOLTIP"] = "Проникающая способность заклинаний: %d (снижение сопротивления противника всем видам магии на %d)";
     L["MCF_CR_EXPERTISE_TOOLTIP"] = "Вероятность того, что противник уклонится от удара или парирует его, снижена на %s.\nРейтинг мастерства: %d (мастерство +%d).";
-    L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"] = "|cff888888(Без учета эффекта талантов)|r";
+    L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"] = "|cff888888(Без учета эффектов талантов)|r";
     L["MCF_CRIT_HIT_TAKEN_CHANCE"] = "Вероятность получить крит. удар";
     L["MCF_STAT_ENEMY_LEVEL"] = "Уровень противника";
     L["MCF_TALENT_EFFECTS_ACTIVE"] = "Действуют эффекты талантов:";
