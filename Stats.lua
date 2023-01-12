@@ -539,7 +539,7 @@ function MCF_MovementSpeed_OnEnter(statFrame)
 	statFrame.UpdateTooltip = MCF_MovementSpeed_OnEnter;
 end
 
-function MCF_CharacterDamageFrame_OnEnter (self)
+function MCF_CharacterDamageFrame_OnEnter(self)
 	if (MOVING_STAT_CATEGORY) then return; end
 	-- Main hand weapon
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -562,7 +562,7 @@ function MCF_CharacterDamageFrame_OnEnter (self)
 	GameTooltip:Show();
 end
 
-function MCF_CharacterAttackFrame_OnEnter (self)
+function MCF_CharacterAttackFrame_OnEnter(self)
 	if (MOVING_STAT_CATEGORY) then return; end
 	-- Main hand weapon
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -579,7 +579,7 @@ function MCF_CharacterAttackFrame_OnEnter (self)
 	GameTooltip:Show();
 end
 
-function MCF_CharacterRangedDamageFrame_OnEnter (self)
+function MCF_CharacterRangedDamageFrame_OnEnter(self)
 	if (MOVING_STAT_CATEGORY) then return; end
 	if ( not self.damage ) then
 		return;
@@ -592,7 +592,7 @@ function MCF_CharacterRangedDamageFrame_OnEnter (self)
 	GameTooltip:Show();
 end
 
-function MCF_CharacterSpellBonusDamage_OnEnter (self)
+function MCF_CharacterSpellBonusDamage_OnEnter(self)
 	if (MOVING_STAT_CATEGORY) then return; end
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, self.tooltip).." "..self.minModifier..FONT_COLOR_CODE_CLOSE);
@@ -628,7 +628,7 @@ function MCF_CharacterSpellBonusDamage_OnEnter (self)
 	GameTooltip:Show();
 end
 
-function MCF_CharacterSpellCritChance_OnEnter (self)
+function MCF_CharacterSpellCritChance_OnEnter(self)
 	if (MOVING_STAT_CATEGORY) then return; end
 	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, SPELL_CRIT_CHANCE).." "..self.minCrit..FONT_COLOR_CODE_CLOSE);
@@ -879,6 +879,66 @@ function MCF_Expertise_OnEnter(statFrame)
 			parryDisplay = mainhandParry.."  ";
 		end
 		GameTooltip:AddDoubleLine("      "..level, parryDisplay.."  ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+		
+	GameTooltip:Show();
+end
+
+function MCF_Defense_OnEnter(statFrame)
+	if (MOVING_STAT_CATEGORY) then
+		return;
+	end
+
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+
+	local base, modifier = UnitDefense("player");
+	local defensePercent = GetDodgeBlockParryChanceFromDefense();
+	local CritHitTakenChance = GetCombatRatingBonus(CR_DEFENSE_SKILL);
+
+	local posBuff = 0;
+	local negBuff = 0;
+	if ( modifier > 0 ) then
+		posBuff = modifier;
+	elseif ( modifier < 0 ) then
+		negBuff = modifier;
+	end
+
+	if (CritHitTakenChance >= 0) then
+		CritHitTakenChance = format("+%.2F%%", CritHitTakenChance);
+	else
+		CritHitTakenChance = RED_FONT_COLOR_CODE..format("%.2F%%", CritHitTakenChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	
+	local _, defenseText = MCF_PaperDollFormatStat(DEFENSE, base, posBuff, negBuff, statFrame, text, true);
+
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..defenseText..FONT_COLOR_CODE_CLOSE);
+
+	GameTooltip:AddLine(format(DEFAULT_STATDEFENSE_TOOLTIP, GetCombatRating(CR_DEFENSE_SKILL), GetCombatRatingBonus(CR_DEFENSE_SKILL), defensePercent, defensePercent));
+	GameTooltip:AddLine(" ");
+
+	local _, class = UnitClass("player");
+	if ( class == "DRUID" ) then
+		local talentName, _, _, _, rank = GetTalentInfo(2, 18);
+		if (rank > 0) then
+			local icon = "Interface\\Icons\\Ability_Druid_Enrage";
+			local talentPercent = rank * 2;
+
+			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"], talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+			GameTooltip:AddTexture(icon);
+			GameTooltip:AddLine(" ");
+		end
+	end
+
+	GameTooltip:AddDoubleLine(L["MCF_STAT_ENEMY_LEVEL"], L["MCF_CRIT_HIT_TAKEN_CHANCE"], HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local critHitTakenChance = format("%.2F%%", MCF_GetCritHitTakenChance(i));
+		local level = playerLevel + i;
+			if (playerLevel == 80 and i == 3) then
+				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+			end
+		GameTooltip:AddDoubleLine("      "..level, critHitTakenChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
 	end
 		
 	GameTooltip:Show();
@@ -1160,7 +1220,6 @@ function MCF_PaperDollFrame_SetDruidMana(statFrame, unit)
 	statFrame:Show();
 end
 
---Hard locked two variables in order to temporary fixing it. Probably needs another function to calculate it manually
 function MCF_PaperDollFrame_SetItemLevel(statFrame, unit)
     if ( unit ~= "player" ) then
         statFrame:Hide();
@@ -1345,6 +1404,7 @@ function MCF_PaperDollFrame_SetStat(statFrame, unit, statIndex)
 	statFrame:Show();
 end
 
+-- MCF TODO: Add racial resistance buffs
 function MCF_PaperDollFrame_SetResistance(statFrame, unit, resistanceIndex)
 	local base, resistance, positive, negative = UnitResistance(unit, resistanceIndex);
 	local resistanceNameShort = _G["DAMAGE_SCHOOL"..(resistanceIndex+1)];
@@ -1389,66 +1449,6 @@ function MCF_PaperDollFrame_SetArmor(statFrame, unit)
 	end
 	
 	statFrame:Show();
-end
-
-function MCF_Defense_OnEnter(statFrame)
-	if (MOVING_STAT_CATEGORY) then
-		return;
-	end
-
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-
-	local base, modifier = UnitDefense("player");
-	local defensePercent = GetDodgeBlockParryChanceFromDefense();
-	local CritHitTakenChance = GetCombatRatingBonus(CR_DEFENSE_SKILL);
-
-	local posBuff = 0;
-	local negBuff = 0;
-	if ( modifier > 0 ) then
-		posBuff = modifier;
-	elseif ( modifier < 0 ) then
-		negBuff = modifier;
-	end
-
-	if (CritHitTakenChance >= 0) then
-		CritHitTakenChance = format("+%.2F%%", CritHitTakenChance);
-	else
-		CritHitTakenChance = RED_FONT_COLOR_CODE..format("%.2F%%", CritHitTakenChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	
-	local _, defenseText = MCF_PaperDollFormatStat(DEFENSE, base, posBuff, negBuff, statFrame, text, true);
-
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..defenseText..FONT_COLOR_CODE_CLOSE);
-
-	GameTooltip:AddLine(format(DEFAULT_STATDEFENSE_TOOLTIP, GetCombatRating(CR_DEFENSE_SKILL), GetCombatRatingBonus(CR_DEFENSE_SKILL), defensePercent, defensePercent));
-	GameTooltip:AddLine(" ");
-
-	local _, class = UnitClass("player");
-	if ( class == "DRUID" and true ) then
-		local talentName, icon, _, _, rank = GetTalentInfo(2, 18);
-		if (rank > 0) then
-			icon = "Interface\\Icons\\Ability_Druid_Enrage";
-			local talentPercent = rank * 2;
-
-			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
-			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"], talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-			GameTooltip:AddTexture(icon);
-			GameTooltip:AddLine(" ");
-		end
-	end
-
-	GameTooltip:AddDoubleLine(L["MCF_STAT_ENEMY_LEVEL"], L["MCF_CRIT_HIT_TAKEN_CHANCE"], HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	local playerLevel = UnitLevel("player");
-	for i=0, 3 do
-		local critHitTakenChance = format("%.2F%%", MCF_GetCritHitTakenChance(i));
-		local level = playerLevel + i;
-			if (playerLevel == 80 and i == 3) then
-				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-			end
-		GameTooltip:AddDoubleLine("      "..level, critHitTakenChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-		
-	GameTooltip:Show();
 end
 
 function MCF_PaperDollFrame_SetDefense(statFrame, unit)
