@@ -1361,9 +1361,9 @@
 					</Anchors>
 				</FontString>
 				<FontString name="$parentSubText" inherits="GameFontHighlightSmall" nonspacewrap="true" maxLines="4" justifyH="LEFT" justifyV="TOP">
-					<Size>
+					<!-- <Size>
 						<AbsDimension y="42" x="0"/>
-					</Size>
+					</Size> -->
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeTo="$parentTitle" relativePoint="BOTTOMLEFT">
 							<Offset>
