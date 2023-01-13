@@ -9,5 +9,7 @@
 - **Equipment manager.** Great improvement from default version. Also fixed weird bug with ignored slots which is present even on retail client (ignored slots are being saved correctly now when you create/edit sets).
 - **Other addons integration.** You can integrate [TacoTip]'s Gear Score value into Item Level stat line *(check Interface/AddOns/ModernCharacterFrame options)*.
 
+Latest release is always available here on GitHub or on [CurseForge].
 
 [TacoTip]: <https://www.curseforge.com/wow/addons/tacotip-gearscore-talents>
+[CurseForge]: <https://www.curseforge.com/wow/addons/modern-character-frame>
