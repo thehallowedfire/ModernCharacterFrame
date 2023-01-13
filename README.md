@@ -12,9 +12,9 @@
 - **Other addons integration.** You can integrate [TacoTip]'s Gear Score value into Item Level stat line *(check Interface/AddOns/ModernCharacterFrame options)*.
 
 #### Currently supported localizations
-English,
-French,
-Russian
+- English
+- French
+- Russian
 
 If you want to contribute and translate the addon for your language feel free to create a branch and make pull request (or you can just send me your .lua file via DM).
 
