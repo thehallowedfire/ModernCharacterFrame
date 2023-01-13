@@ -1,6 +1,8 @@
 # Modern Character Frame
 **Modern Character Frame** is an addon for WoW WotLK Classic. It re-creates modern (post-Cata) look of Character frame.
 
+![](https://cdn.discordapp.com/attachments/907414226564444212/1060441990740848680/MCF_v0.4.0_preview_curse.gif)
+
 #### Features
 - Re-skins default Character frame. You can expand/collapse side panel by pressing a button.
 - Improved character model frame. You can drag/rotate it more freely than default version.
