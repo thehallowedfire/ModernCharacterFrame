@@ -16,7 +16,8 @@ local addonName, L = ...;
 
 if (GetLocale() == "frFR") then
     -- OPTIONS FRAME
-    L["MCF_OPTIONS_DESCRIPTION"] = "Re-skins default Character frame into modern version.\n\nVersion: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nAuthor: Профессия — Flamegor (EU).\nTranslated in french by Datyb — Auberdine (EU)";
+    -- Translate please "Re-skins default Character frame into modern version.", "Version:", "Author:" and your version of "<your language> translation:"
+    L["MCF_OPTIONS_DESCRIPTION"] = "Re-skins default Character frame into modern version.\n\nVersion: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nAuthor: Профессия — Flamegor (EU).\nFrench translation: Datyb — Auberdine (EU).";
     -- Taco Tip integration
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "Score d'équipement de TacoTip";
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE_DISABLED"] = "Score d'équipement de TacoTip "..RED_FONT_COLOR_CODE.."(AddOn n'est pas chargé)"..FONT_COLOR_CODE_CLOSE;
