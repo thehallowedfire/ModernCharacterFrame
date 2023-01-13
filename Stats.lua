@@ -15,27 +15,6 @@ function MCF_CreateStatsFrame(frame)
     frame.StatsPane = CreateFrame("ScrollFrame", "CharacterStatsPane", frame, "MCF-CharacterStatsPaneTemplate");
 end
 
-function MCF_PaperDollFrame_SetLabelAndText(statFrame, label, text, isPercentage)
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, label));
-	if ( isPercentage ) then
-		text = format("%.2F%%", text);
-	end
-	_G[statFrame:GetName().."StatText"]:SetText(text);
-end
-
-function MCF_PaperDollStatTooltip (self)
-	if (MOVING_STAT_CATEGORY ~= nil) then return; end
-	if ( not self.tooltip ) then
-		return;
-	end
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(self.tooltip);
-	if ( self.tooltip2 ) then
-		GameTooltip:AddLine(self.tooltip2, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
-	end
-	GameTooltip:Show();
-end
-
 function MCF_PaperDollFrame_CollapseStatCategory(categoryFrame)
 	if (not categoryFrame.collapsed) then
 		categoryFrame.collapsed = true;
@@ -67,6 +46,101 @@ function MCF_PaperDollFrame_ExpandStatCategory(categoryFrame)
 		categoryFrame.BgMiddle:Show();
 		categoryFrame.BgBottom:Show();
 	end
+end
+
+-- /run MCF_PaperDoll_InitStatCategories(MCF_PAPERDOLL_STATCATEGORY_DEFAULTORDER, "statCategoryOrder", "statCategoriesCollapsed", "player");
+function MCF_PaperDoll_InitStatCategories(defaultOrder, orderCVarName, collapsedCVarName, unit)
+	local category;
+	local order = defaultOrder;
+
+	-- Load order from cvar
+	if (orderCVarName) then
+		local orderString = MCF_GetSettings(orderCVarName);
+		local savedOrder = {};
+		if (orderString and orderString ~= "") then
+			for i in gmatch(orderString, "%d+,?") do
+				i = gsub(i, ",", "");
+				i = tonumber(i);
+				if (i) then
+					local categoryName = MCF_PaperDoll_FindCategoryById(i);
+					if (categoryName) then
+						tinsert(savedOrder, categoryName);
+					end
+				end
+			end
+			 
+			-- Validate the saved order
+			local valid = true;
+			if (#savedOrder == #defaultOrder) then
+				for i, category1 in next, defaultOrder do
+					local found = false;
+					for j, category2 in next, savedOrder do
+						if (category1 == category2) then
+							found = true;
+							break;
+						end
+					end
+					if (not found) then
+						valid = false;
+						break;
+					end
+				end
+			else
+				valid = false;
+			end
+			
+			if (valid) then
+				order = savedOrder;
+			else
+				MCF_SetSettings(orderCVarName, "");
+			end
+		end
+	end
+
+	-- Initialize stat frames
+	table.wipe(StatCategoryFrames);
+	for index=1, #order do
+		local frame = _G["CharacterStatsPaneCategory"..index];
+		assert(frame);
+		tinsert(StatCategoryFrames, frame);
+		frame.Category = order[index];
+		frame:Show();
+		
+		-- Expand or collapse
+		local categoryInfo = MCF_PAPERDOLL_STATCATEGORIES[frame.Category];
+		if (categoryInfo and collapsedCVarName and MCF_GetSettings(collapsedCVarName, categoryInfo.id)) then
+			MCF_PaperDollFrame_CollapseStatCategory(frame);
+		else
+			MCF_PaperDollFrame_ExpandStatCategory(frame);
+		end
+	end
+	
+	-- Hide unused stat frames
+	local index = #order+1;
+	while(_G["CharacterStatsPaneCategory"..index]) do
+		_G["CharacterStatsPaneCategory"..index]:Hide();
+		_G["CharacterStatsPaneCategory"..index].Category = nil;
+		index = index + 1;
+	end	
+	
+	-- Set up stats data
+	CharacterStatsPane.defaultOrder = defaultOrder;
+	CharacterStatsPane.orderCVarName = orderCVarName;
+	CharacterStatsPane.collapsedCVarName = collapsedCVarName;
+	CharacterStatsPane.unit = unit;
+	
+	-- Update
+	MCF_PaperDoll_UpdateCategoryPositions();
+	MCF_PaperDollFrame_UpdateStats();
+end
+
+function MCF_PaperDoll_FindCategoryById(id)
+	for categoryName, category in pairs(MCF_PAPERDOLL_STATCATEGORIES) do
+		if (category.id == id) then
+			return categoryName;
+		end
+	end
+	return nil;
 end
 
 function MCF_PaperDollFrame_UpdateStatCategory(categoryFrame)
@@ -174,100 +248,30 @@ function MCF_PaperDollFrame_UpdateStatScrollChildHeight()
 	CharacterStatsPaneScrollChild:SetHeight(totalHeight+10-(CharacterStatsPane.initialOffsetY or 0));
 end
 
-function MCF_PaperDoll_FindCategoryById(id)
-	for categoryName, category in pairs(MCF_PAPERDOLL_STATCATEGORIES) do
-		if (category.id == id) then
-			return categoryName;
-		end
+
+
+function MCF_PaperDollFrame_SetLabelAndText(statFrame, label, text, isPercentage)
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, label));
+	if ( isPercentage ) then
+		text = format("%.2F%%", text);
 	end
-	return nil;
+	_G[statFrame:GetName().."StatText"]:SetText(text);
 end
 
--- /run MCF_PaperDoll_InitStatCategories(MCF_PAPERDOLL_STATCATEGORY_DEFAULTORDER, "statCategoryOrder", "statCategoriesCollapsed", "player");
-function MCF_PaperDoll_InitStatCategories(defaultOrder, orderCVarName, collapsedCVarName, unit)
-	local category;
-	local order = defaultOrder;
-
-	-- Load order from cvar
-	if (orderCVarName) then
-		local orderString = MCF_GetSettings(orderCVarName);
-		local savedOrder = {};
-		if (orderString and orderString ~= "") then
-			for i in gmatch(orderString, "%d+,?") do
-				i = gsub(i, ",", "");
-				i = tonumber(i);
-				if (i) then
-					local categoryName = MCF_PaperDoll_FindCategoryById(i);
-					if (categoryName) then
-						tinsert(savedOrder, categoryName);
-					end
-				end
-			end
-			 
-			-- Validate the saved order
-			local valid = true;
-			if (#savedOrder == #defaultOrder) then
-				for i, category1 in next, defaultOrder do
-					local found = false;
-					for j, category2 in next, savedOrder do
-						if (category1 == category2) then
-							found = true;
-							break;
-						end
-					end
-					if (not found) then
-						valid = false;
-						break;
-					end
-				end
-			else
-				valid = false;
-			end
-			
-			if (valid) then
-				order = savedOrder;
-			else
-				MCF_SetSettings(orderCVarName, "");
-			end
-		end
+function MCF_PaperDollStatTooltip(self)
+	if (MOVING_STAT_CATEGORY ~= nil) then return; end
+	if ( not self.tooltip ) then
+		return;
 	end
-
-	-- Initialize stat frames
-	table.wipe(StatCategoryFrames);
-	for index=1, #order do
-		local frame = _G["CharacterStatsPaneCategory"..index];
-		assert(frame);
-		tinsert(StatCategoryFrames, frame);
-		frame.Category = order[index];
-		frame:Show();
-		
-		-- Expand or collapse
-		local categoryInfo = MCF_PAPERDOLL_STATCATEGORIES[frame.Category];
-		if (categoryInfo and collapsedCVarName and MCF_GetSettings(collapsedCVarName, categoryInfo.id)) then
-			MCF_PaperDollFrame_CollapseStatCategory(frame);
-		else
-			MCF_PaperDollFrame_ExpandStatCategory(frame);
-		end
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip:SetText(self.tooltip);
+	if ( self.tooltip2 ) then
+		GameTooltip:AddLine(self.tooltip2, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1);
 	end
-	
-	-- Hide unused stat frames
-	local index = #order+1;
-	while(_G["CharacterStatsPaneCategory"..index]) do
-		_G["CharacterStatsPaneCategory"..index]:Hide();
-		_G["CharacterStatsPaneCategory"..index].Category = nil;
-		index = index + 1;
-	end	
-	
-	-- Set up stats data
-	CharacterStatsPane.defaultOrder = defaultOrder;
-	CharacterStatsPane.orderCVarName = orderCVarName;
-	CharacterStatsPane.collapsedCVarName = collapsedCVarName;
-	CharacterStatsPane.unit = unit;
-	
-	-- Update
-	MCF_PaperDoll_UpdateCategoryPositions();
-	MCF_PaperDollFrame_UpdateStats();
+	GameTooltip:Show();
 end
+
+
 
 function MCF_PaperDoll_SaveStatCategoryOrder()
 	if (not CharacterStatsPane.orderCVarName) then
@@ -422,6 +426,8 @@ function MCF_PaperDollStatCategory_OnDragStop(self)
 	MCF_PaperDoll_SaveStatCategoryOrder();
 end
 
+
+
 function MCF_ColorPaperDollStat(base, posBuff, negBuff)
 	local stat;
 	local effective = max(0,base + posBuff + negBuff);
@@ -521,470 +527,6 @@ function MCF_CalculateAverageItemLevel()
 end
 
 ----------------------------------------------------------------------------------
---------------------------------- STATS ON ENTER ---------------------------------
-----------------------------------------------------------------------------------
-function MCF_MovementSpeed_OnEnter(statFrame)
-	if (MOVING_STAT_CATEGORY) then return; end
-	
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_MOVEMENT_SPEED).." "..format("%d%%", statFrame.speed+0.5)..FONT_COLOR_CODE_CLOSE);
-	
-	GameTooltip:AddLine(format(STAT_MOVEMENT_GROUND_TOOLTIP, statFrame.runSpeed+0.5));
-	if (statFrame.unit ~= "pet") then
-		GameTooltip:AddLine(format(STAT_MOVEMENT_FLIGHT_TOOLTIP, statFrame.flightSpeed+0.5));
-	end
-	GameTooltip:AddLine(format(STAT_MOVEMENT_SWIM_TOOLTIP, statFrame.swimSpeed+0.5));
-	GameTooltip:Show();
-	
-	statFrame.UpdateTooltip = MCF_MovementSpeed_OnEnter;
-end
-
-function MCF_CharacterDamageFrame_OnEnter(self)
-	if (MOVING_STAT_CATEGORY) then return; end
-	-- Main hand weapon
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	if ( self.unit == "pet" ) then
-		GameTooltip:SetText(INVTYPE_WEAPONMAINHAND_PET, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	else
-		GameTooltip:SetText(INVTYPE_WEAPONMAINHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	end
-	GameTooltip:AddDoubleLine(format(STAT_FORMAT, ATTACK_SPEED_SECONDS), format("%.2F", self.attackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE), self.damage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE_PER_SECOND), format("%.1F", self.dps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	-- Check for offhand weapon
-	if ( self.offhandAttackSpeed ) then
-		GameTooltip:AddLine("\n");
-		GameTooltip:AddLine(INVTYPE_WEAPONOFFHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-		GameTooltip:AddDoubleLine(format(STAT_FORMAT, ATTACK_SPEED_SECONDS), format("%.2F", self.offhandAttackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE), self.offhandDamage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE_PER_SECOND), format("%.1F", self.offhandDps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-	GameTooltip:Show();
-end
-
-function MCF_CharacterAttackFrame_OnEnter(self)
-	if (MOVING_STAT_CATEGORY) then return; end
-	-- Main hand weapon
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(INVTYPE_WEAPONMAINHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	GameTooltip:AddLine(self.weaponSkill);
-	GameTooltip:AddLine(self.weaponRating);
-	-- Check for offhand weapon
-	if ( self.offhandSkill ) then
-		GameTooltip:AddLine("\n");
-		GameTooltip:AddLine(INVTYPE_WEAPONOFFHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-		GameTooltip:AddLine(self.offhandSkill);
-		GameTooltip:AddLine(self.offhandRating);
-	end
-	GameTooltip:Show();
-end
-
-function MCF_CharacterRangedDamageFrame_OnEnter(self)
-	if (MOVING_STAT_CATEGORY) then return; end
-	if ( not self.damage ) then
-		return;
-	end
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(INVTYPE_RANGED, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	GameTooltip:AddDoubleLine(format(STAT_FORMAT, ATTACK_SPEED_SECONDS), format("%.2F", self.attackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE), self.damage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE_PER_SECOND), format("%.1F", self.dps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	GameTooltip:Show();
-end
-
-function MCF_CharacterSpellBonusDamage_OnEnter(self)
-	if (MOVING_STAT_CATEGORY) then return; end
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, self.tooltip).." "..self.minModifier..FONT_COLOR_CODE_CLOSE);
-
-	for i=2, MAX_SPELL_SCHOOLS do
-		if (self.bonusDamage and self.bonusDamage[i] ~= self.minModifier) then
-			GameTooltip:AddLine(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, _G["DAMAGE_SCHOOL"..i]).." "..self.bonusDamage[i]..FONT_COLOR_CODE_CLOSE);
-			GameTooltip:AddTexture("Interface\\PaperDollInfoFrame\\SpellSchoolIcon"..i);
-		end
-	end
-	
-	GameTooltip:AddLine(self.tooltip2);
-	
-	if (self.bonusDamage and self.unit == "player") then
-		local petStr, damage;
-		if (self.bonusDamage[6] == self.minModifier and self.bonusDamage[3] == self.minModifier) then
-			petStr = PET_BONUS_TOOLTIP_WARLOCK_SPELLDMG;
-			damage = self.minModifier;
-		elseif( self.bonusDamage[6] > self.bonusDamage[3] ) then
-			petStr = PET_BONUS_TOOLTIP_WARLOCK_SPELLDMG_SHADOW;
-			damage = self.bonusDamage[6];
-		else
-			petStr = PET_BONUS_TOOLTIP_WARLOCK_SPELLDMG_FIRE;
-			damage = self.bonusDamage[3];
-		end
-		
-		local petBonusAP = MCF_ComputePetBonus("PET_BONUS_SPELLDMG_TO_AP", damage );
-		local petBonusDmg = MCF_ComputePetBonus("PET_BONUS_SPELLDMG_TO_SPELLDMG", damage );
-		if( petBonusAP > 0 or petBonusDmg > 0 ) then
-			GameTooltip:AddLine(format(petStr, petBonusAP, petBonusDmg), nil, nil, nil, 1 );
-		end
-	end
-	GameTooltip:Show();
-end
-
-function MCF_CharacterSpellCritChance_OnEnter(self)
-	if (MOVING_STAT_CATEGORY) then return; end
-	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, SPELL_CRIT_CHANCE).." "..self.minCrit..FONT_COLOR_CODE_CLOSE);
-	local spellCrit;
-	for i=2, MAX_SPELL_SCHOOLS do
-		spellCrit = format("%.2F%%", self.spellCrit[i]);
-		if (spellCrit ~= self.minCrit) then
-			GameTooltip:AddDoubleLine(_G["DAMAGE_SCHOOL"..i], spellCrit, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-			GameTooltip:AddTexture("Interface\\PaperDollInfoFrame\\SpellSchoolIcon"..i);
-		end
-	end
-	GameTooltip:AddLine(format(L["MCF_CR_CRIT_SPELL_TOOLTIP"], GetCombatRating(CR_CRIT_SPELL), GetCombatRatingBonus(CR_CRIT_SPELL)));
-	GameTooltip:Show();
-end
-
-function MCF_MeleeHitChance_OnEnter(statFrame)
-
-	if (MOVING_STAT_CATEGORY) then return; end
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
-	if (hitChance >= 0) then
-		hitChance = format("+%.2F%%", hitChance);
-	else
-		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
-	GameTooltip:AddLine(format(STAT_HIT_MELEE_TOOLTIP, GetCombatRating(CR_HIT_MELEE), GetCombatRatingBonus(CR_HIT_MELEE)));
-	GameTooltip:AddLine(" ");
-	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	if (IsDualWielding()) then
-		GameTooltip:AddLine(STAT_HIT_NORMAL_ATTACKS, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
-	end
-	local playerLevel = UnitLevel("player");
-	for i=0, 3 do
-		local missChance = format("%.2F%%", MCF_GetMeleeMissChance(i, false));
-		local level = playerLevel + i;
-			if (i == 3) then
-				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-			end
-		GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-	
-	if (IsDualWielding()) then
-		GameTooltip:AddLine(STAT_HIT_SPECIAL_ATTACKS, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
-		for i=0, 3 do
-			local missChance = format("%.2F%%", MCF_GetMeleeMissChance(i, true));
-			local level = playerLevel + i;
-			if (i == 3) then
-				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-			end
-			GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		end
-	end
-	
-	GameTooltip:Show();
-end
-
-function MCF_RangedHitChance_OnEnter(statFrame)
-
-	if (MOVING_STAT_CATEGORY) then return; end
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-	local hitChance = GetCombatRatingBonus(CR_HIT_RANGED);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
-	if (hitChance >= 0) then
-		hitChance = format("+%.2F%%", hitChance);
-	else
-		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
-	GameTooltip:AddLine(format(STAT_HIT_RANGED_TOOLTIP, GetCombatRating(CR_HIT_RANGED), GetCombatRatingBonus(CR_HIT_RANGED)));
-	GameTooltip:AddLine(" ");
-	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	local playerLevel = UnitLevel("player");
-	for i=0, 3 do
-		local missChance = format("%.2F%%", MCF_GetRangedMissChance(i));
-		local level = playerLevel + i;
-			if (i == 3) then
-				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-			end
-		GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-		
-	GameTooltip:Show();
-end
-
---[[ function MCF_SpellHitCheckTalents()
-	local _, class = UnitClass("player");
-	if ( not MCF_TALENTS_FOR_SPELLHIT[class] ) then
-		return;
-	end
-
-	local result = {};
-	for tableIndex, talent in pairs(MCF_TALENTS_FOR_SPELLHIT[class]) do
-		local _, _, _, _, rank = GetTalentInfo(talent.tab, talent.index);
-		if (rank > 0 ) then
-			local id;
-			if ( not talent.all ) then
-				for i=1, #talent.schools do
-					if talent.schools[i] then
-						id = i-1;
-					end
-				end
-			end
-
-			local plusHit = rank * talent.increment;
-
-			result[tableIndex] = {all = talent.all, school = id, plusHit = plusHit};
-		end
-	end
-
-	return result;
-end
-
-function MCF_SpellHitChance_OnEnter(statFrame)
-
-	if (MOVING_STAT_CATEGORY) then return; end
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);
-
-	local hitFromTalents = MCF_SpellHitCheckTalents();
-	local schoolHitChance, school, additionalHit;
-	if ( hitFromTalents and (#hitFromTalents > 0) ) then
-		for i=1, #hitFromTalents do
-			if hitFromTalents[i].all then
-				hitChance = hitChance + hitFromTalents[i].plusHit;
-			else
-				school = hitFromTalents[i].school;
-				additionalHit = hitFromTalents[i].plusHit;
-			end
-		end
-	end
-	schoolHitChance = hitChance;
-
-	if (hitChance >= 0) then
-		hitChance = format("+%.2F%%", hitChance);
-	else
-		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
-
-	if ( school ) then
-		schoolHitChance = format("+%.2F%%", schoolHitChance + additionalHit);
-		GameTooltip:AddDoubleLine(_G["DAMAGE_SCHOOL"..school], schoolHitChance, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-		GameTooltip:AddTexture("Interface\\PaperDollInfoFrame\\SpellSchoolIcon"..school);
-	end
-
-	GameTooltip:AddLine(format(STAT_HIT_SPELL_TOOLTIP, GetCombatRating(CR_HIT_SPELL), GetCombatRatingBonus(CR_HIT_SPELL)));
-	GameTooltip:AddLine(" ");
-	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	local playerLevel = UnitLevel("player");
-	for i=0, 3 do
-		local missChance = format("%.2F%%", MCF_GetSpellMissChance(i));
-		local level = playerLevel + i;
-			if (i == 3) then
-				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-			end
-		GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-		
-	GameTooltip:Show();
-end ]]
-
-function MCF_SpellHitChance_OnEnter(statFrame)
-
-	if (MOVING_STAT_CATEGORY) then return; end
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);--[[  + GetSpellHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
-	if (hitChance >= 0) then
-		hitChance = format("+%.2F%%", hitChance);
-	else
-		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
-	GameTooltip:AddLine(format(STAT_HIT_SPELL_TOOLTIP, GetCombatRating(CR_HIT_SPELL), GetCombatRatingBonus(CR_HIT_SPELL)));
-	GameTooltip:AddLine(L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"]);
-	GameTooltip:AddLine(" ");
-	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	local playerLevel = UnitLevel("player");
-	for i=0, 3 do
-		local missChance = format("%.2F%%", MCF_GetSpellMissChance(i));
-		local level = playerLevel + i;
-			if (i == 3) then
-				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-			end
-		GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-		
-	GameTooltip:Show();
-end
-
-function MCF_Expertise_OnEnter(statFrame)
-
-	if (MOVING_STAT_CATEGORY) then return; end
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-	local expertise, offhandExpertise = GetExpertise();
-	local expertisePercent, offhandExpertisePercent = GetExpertisePercent();
-	expertisePercent = format("%.2F", expertisePercent);
-	offhandExpertisePercent = format("%.2F", offhandExpertisePercent);
-	
-	local expertiseDisplay, expertisePercentDisplay;
-	if (IsDualWielding()) then
-		expertiseDisplay = expertise.." / "..offhandExpertise;
-		expertisePercentDisplay = expertisePercent.."% / "..offhandExpertisePercent.."%";
-	else
-		expertiseDisplay = expertise;
-		expertisePercentDisplay = expertisePercent.."%";
-	end
-	
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, _G["COMBAT_RATING_NAME"..CR_EXPERTISE]).." "..expertiseDisplay..FONT_COLOR_CODE_CLOSE);
-	GameTooltip:AddLine(format(L["MCF_CR_EXPERTISE_TOOLTIP"], expertisePercentDisplay, GetCombatRating(CR_EXPERTISE), GetCombatRatingBonus(CR_EXPERTISE)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
-	GameTooltip:AddLine(" ");
-	
-	-- Dodge chance
-	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, DODGE_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	local playerLevel = UnitLevel("player");
-	for i=0, 3 do
-		local mainhandDodge, offhandDodge = MCF_GetEnemyDodgeChance(i);
-		mainhandDodge = format("%.2F%%", mainhandDodge);
-		offhandDodge = format("%.2F%%", offhandDodge);
-		local level = playerLevel + i;
-		if (i == 3) then
-			level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-		end
-		local dodgeDisplay;
-		if (IsDualWielding() and mainhandDodge ~= offhandDodge) then
-			dodgeDisplay = mainhandDodge.." / "..offhandDodge;
-		else
-			dodgeDisplay = mainhandDodge.."  ";
-		end
-		GameTooltip:AddDoubleLine("      "..level, dodgeDisplay.."  ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-	
-	-- Parry chance
-	GameTooltip:AddLine(" ");
-	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, PARRY_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	local playerLevel = UnitLevel("player");
-	for i=0, 3 do
-		local mainhandParry, offhandParry = MCF_GetEnemyParryChance(i);
-		mainhandParry = format("%.2F%%", mainhandParry);
-		offhandParry = format("%.2F%%", offhandParry);
-		local level = playerLevel + i;
-		if (i == 3) then
-			level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-		end
-		local parryDisplay;
-		if (IsDualWielding() and mainhandParry ~= offhandParry) then
-			parryDisplay = mainhandParry.." / "..offhandParry;
-		else
-			parryDisplay = mainhandParry.."  ";
-		end
-		GameTooltip:AddDoubleLine("      "..level, parryDisplay.."  ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-		
-	GameTooltip:Show();
-end
-
-function MCF_Defense_OnEnter(statFrame)
-	if (MOVING_STAT_CATEGORY) then
-		return;
-	end
-
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-
-	local base, modifier = UnitDefense("player");
-	local defensePercent = GetDodgeBlockParryChanceFromDefense();
-	local CritHitTakenChance = GetCombatRatingBonus(CR_DEFENSE_SKILL);
-
-	local posBuff = 0;
-	local negBuff = 0;
-	if ( modifier > 0 ) then
-		posBuff = modifier;
-	elseif ( modifier < 0 ) then
-		negBuff = modifier;
-	end
-
-	if (CritHitTakenChance >= 0) then
-		CritHitTakenChance = format("+%.2F%%", CritHitTakenChance);
-	else
-		CritHitTakenChance = RED_FONT_COLOR_CODE..format("%.2F%%", CritHitTakenChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	
-	local _, defenseText = MCF_PaperDollFormatStat(DEFENSE, base, posBuff, negBuff, statFrame, text, true);
-
-	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..defenseText..FONT_COLOR_CODE_CLOSE);
-
-	GameTooltip:AddLine(format(DEFAULT_STATDEFENSE_TOOLTIP, GetCombatRating(CR_DEFENSE_SKILL), GetCombatRatingBonus(CR_DEFENSE_SKILL), defensePercent, defensePercent));
-	GameTooltip:AddLine(" ");
-
-	local _, class = UnitClass("player");
-	if ( class == "DRUID" ) then
-		local talentName, _, _, _, rank = GetTalentInfo(2, 18);
-		if (rank > 0) then
-			local icon = "Interface\\Icons\\Ability_Druid_Enrage";
-			local talentPercent = rank * 2;
-
-			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
-			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"], talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-			GameTooltip:AddTexture(icon);
-			GameTooltip:AddLine(" ");
-		end
-	end
-
-	GameTooltip:AddDoubleLine(L["MCF_STAT_ENEMY_LEVEL"], L["MCF_CRIT_HIT_TAKEN_CHANCE"], HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
-	local playerLevel = UnitLevel("player");
-	for i=0, 3 do
-		local critHitTakenChance = format("%.2F%%", MCF_GetCritHitTakenChance(i));
-		local level = playerLevel + i;
-			if (playerLevel == 80 and i == 3) then
-				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
-			end
-		GameTooltip:AddDoubleLine("      "..level, critHitTakenChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
-	end
-		
-	GameTooltip:Show();
-end
-
--- Disabled completely because mastery doesn't exist in WotLK
---[[ function MCF_Mastery_OnEnter(statFrame)
-	if (not MOVING_STAT_CATEGORY) then return; end
-	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
-	
-	local _, class = UnitClass("player");
-	local mastery = GetMastery();
-	local masteryBonus = GetCombatRatingBonus(CR_MASTERY);
-	
-	local title = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_MASTERY).." "..format("%.2F", mastery)..FONT_COLOR_CODE_CLOSE;
-	if (masteryBonus > 0) then
-		title = title..HIGHLIGHT_FONT_COLOR_CODE.." ("..format("%.2F", mastery-masteryBonus)..FONT_COLOR_CODE_CLOSE..GREEN_FONT_COLOR_CODE.."+"..format("%.2F", masteryBonus)..FONT_COLOR_CODE_CLOSE..HIGHLIGHT_FONT_COLOR_CODE..")";
-	end
-	GameTooltip:SetText(title);
-	
-	local masteryKnown = IsSpellKnown(MCF_CLASS_MASTERY_SPELLS[class]);
-	local primaryTalentTree = GetPrimaryTalentTree();
-	if (masteryKnown and primaryTalentTree) then
-		local masterySpell, masterySpell2 = GetTalentTreeMasterySpells(primaryTalentTree);
-		if (masterySpell) then
-			GameTooltip:AddSpellByID(masterySpell);
-		end
-		if (masterySpell2) then
-			GameTooltip:AddLine(" ");
-			GameTooltip:AddSpellByID(masterySpell2);
-		end
-		GameTooltip:AddLine(" ");
-		GameTooltip:AddLine(format(STAT_MASTERY_TOOLTIP, GetCombatRating(CR_MASTERY), masteryBonus), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
-	else
-		GameTooltip:AddLine(format(STAT_MASTERY_TOOLTIP, GetCombatRating(CR_MASTERY), masteryBonus), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
-		GameTooltip:AddLine(" ");
-		if (masteryKnown) then
-			GameTooltip:AddLine(STAT_MASTERY_TOOLTIP_NO_TALENT_SPEC, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, true);
-		else
-			GameTooltip:AddLine(STAT_MASTERY_TOOLTIP_NOT_KNOWN, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, true);
-		end
-	end
-	GameTooltip:Show();
-end ]]
-
-----------------------------------------------------------------------------------
 -------------------------------- STATS ON UPDATE ---------------------------------
 ----------------------------------------------------------------------------------
 function MCF_MovementSpeed_OnUpdate(statFrame, elapsedTime)
@@ -1072,6 +614,27 @@ function MCF_GetSpellMissChance(levelOffset, special)
 	return chance;
 end
 
+function MCF_PaperDollFrame_GetArmorReduction(armor, attackerLevel)
+	local levelModifier = attackerLevel;
+	if ( levelModifier > 80 ) then
+		levelModifier = levelModifier + (4.5 * (levelModifier-59)) + (20 * (levelModifier - 80));
+	elseif ( levelModifier > 59 ) then
+		levelModifier = levelModifier + (4.5 * (levelModifier-59));
+	end
+	local temp = 0.1*armor/(8.5*levelModifier + 40);
+	temp = temp/(1+temp);
+
+	if ( temp > 0.75 ) then
+		return 75;
+	end
+
+	if ( temp < 0 ) then
+		return 0;
+	end
+
+	return temp*100;
+end
+
 function MCF_GetCritHitTakenChance(levelOffset, special)
 	if (levelOffset < 0 or levelOffset > 3) then
 		return 0;
@@ -1143,30 +706,10 @@ function MCF_GetEnemyParryChance(levelOffset)
 	return chance, offhandChance;
 end
 
-function MCF_PaperDollFrame_GetArmorReduction(armor, attackerLevel)
-	local levelModifier = attackerLevel;
-	if ( levelModifier > 80 ) then
-		levelModifier = levelModifier + (4.5 * (levelModifier-59)) + (20 * (levelModifier - 80));
-	elseif ( levelModifier > 59 ) then
-		levelModifier = levelModifier + (4.5 * (levelModifier-59));
-	end
-	local temp = 0.1*armor/(8.5*levelModifier + 40);
-	temp = temp/(1+temp);
-
-	if ( temp > 0.75 ) then
-		return 75;
-	end
-
-	if ( temp < 0 ) then
-		return 0;
-	end
-
-	return temp*100;
-end
-
 ----------------------------------------------------------------------------------
 ------------------------------- SET STAT FUNCTIONS -------------------------------
 ----------------------------------------------------------------------------------
+-- GENERAL
 function MCF_PaperDollFrame_SetHealth(statFrame, unit)
 	if (not unit) then
 		unit = "player";
@@ -1282,6 +825,7 @@ function MCF_PaperDollFrame_SetMovementSpeed(statFrame, unit)
 	statFrame:SetScript("OnUpdate", MCF_MovementSpeed_OnUpdate);
 end
 
+-- ATTRIBUTES
 -- NEEDS INTELLECT REWORK
 function MCF_PaperDollFrame_SetStat(statFrame, unit, statIndex)
 	local label = _G[statFrame:GetName().."Label"];
@@ -1351,9 +895,11 @@ function MCF_PaperDollFrame_SetStat(statFrame, unit, statIndex)
 		elseif ( statIndex == 4 ) then
 			if ( UnitHasMana("player") ) then
 				local baseInt = min(20, effectiveStat);
-				local moreInt = effectiveStat - baseInt
+				local moreInt = effectiveStat - baseInt;
+				local spellPowerFromIntellect = max(0, effectiveStat-10);
+				
 				if ( UnitHasMana("player") ) then
-					statFrame.tooltip2 = format(statFrame.tooltip2, baseInt + moreInt*MANA_PER_INTELLECT, max(0, effectiveStat-10), GetSpellCritChanceFromIntellect("player"));
+					statFrame.tooltip2 = format(statFrame.tooltip2, baseInt + moreInt*MANA_PER_INTELLECT, spellPowerFromIntellect, GetSpellCritChanceFromIntellect("player"));
 				else
 					statFrame.tooltip2 = nil;
 				end
@@ -1404,133 +950,7 @@ function MCF_PaperDollFrame_SetStat(statFrame, unit, statIndex)
 	statFrame:Show();
 end
 
--- MCF TODO: Add racial resistance buffs
-function MCF_PaperDollFrame_SetResistance(statFrame, unit, resistanceIndex)
-	local base, resistance, positive, negative = UnitResistance(unit, resistanceIndex);
-	local resistanceNameShort = _G["DAMAGE_SCHOOL"..(resistanceIndex+1)];
-	local resistanceName = _G["RESISTANCE"..resistanceIndex.."_NAME"];
-	local resistanceIconCode = "|TInterface\\PaperDollInfoFrame\\SpellSchoolIcon"..(resistanceIndex+1)..":0|t";
-	_G[statFrame:GetName().."Label"]:SetText(resistanceIconCode.." "..format(STAT_FORMAT, resistanceNameShort));
-	local text = _G[statFrame:GetName().."StatText"];
-	MCF_PaperDollFormatStat(resistanceName, base, positive, negative, statFrame, text);
-	statFrame.tooltip = resistanceIconCode.." "..HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, resistanceName).." "..resistance..FONT_COLOR_CODE_CLOSE;
-	
-	if ( positive ~= 0 or negative ~= 0 ) then
-		statFrame.tooltip = statFrame.tooltip.. " ( "..HIGHLIGHT_FONT_COLOR_CODE..base;
-		if( positive > 0 ) then
-			statFrame.tooltip = statFrame.tooltip..GREEN_FONT_COLOR_CODE.." +"..positive;
-		end
-		if( negative < 0 ) then
-			statFrame.tooltip = statFrame.tooltip.." "..RED_FONT_COLOR_CODE..negative;
-		end
-		statFrame.tooltip = statFrame.tooltip..FONT_COLOR_CODE_CLOSE.." )";
-	end
-	
-	statFrame.tooltip2 = format(L["MCF_RESISTANCE_TOOLTIP_SUBTEXT"], _G["SPELL_SCHOOL"..resistanceIndex.."_CAP"], ResistancePercent(resistance, UnitLevel(unit)));
-	
-	-- TODO: Put this in the tooltip?
-	--local petBonus = ComputePetBonus( "PET_BONUS_RES", resistance );
-end
-
-function MCF_PaperDollFrame_SetArmor(statFrame, unit)
-	local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor(unit);
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, ARMOR));
-	local text = _G[statFrame:GetName().."StatText"];
-
-	MCF_PaperDollFormatStat(ARMOR, base, posBuff, negBuff, statFrame, text);
-	local armorReduction = MCF_PaperDollFrame_GetArmorReduction(effectiveArmor, UnitLevel(unit));
-	statFrame.tooltip2 = format(DEFAULT_STATARMOR_TOOLTIP, armorReduction);
-	
-	if ( unit == "player" ) then
-		local petBonus = MCF_ComputePetBonus("PET_BONUS_ARMOR", effectiveArmor );
-		if( petBonus > 0 ) then
-			statFrame.tooltip2 = statFrame.tooltip2 .. "\n" .. format(PET_BONUS_TOOLTIP_ARMOR, petBonus);
-		end
-	end
-	
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetDefense(statFrame, unit)
-	if (unit ~= "player") then
-		statFrame:Hide();
-		return;
-	end
-
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, DEFENSE));
-	local text = _G[statFrame:GetName().."StatText"];
-
-	local base, modifier = UnitDefense("player");
-	local posBuff = 0;
-	local negBuff = 0;
-	if ( modifier > 0 ) then
-		posBuff = modifier;
-	elseif ( modifier < 0 ) then
-		negBuff = modifier;
-	end
-	
-	local effective = MCF_PaperDollFormatStat(DEFENSE, base, posBuff, negBuff, statFrame, text, true);
-	text:SetText(effective);
-
-	statFrame:SetScript("OnEnter", MCF_Defense_OnEnter);
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetDodge(statFrame, unit)
-	if (unit ~= "player") then
-		statFrame:Hide();
-		return;
-	end
-	
-	local chance = GetDodgeChance();
-	MCF_PaperDollFrame_SetLabelAndText(statFrame, STAT_DODGE, chance, 1);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, DODGE_CHANCE).." "..string.format("%.02f", chance).."%"..FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(CR_DODGE_TOOLTIP, GetCombatRating(CR_DODGE), GetCombatRatingBonus(CR_DODGE));
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetBlock(statFrame, unit)
-	if (unit ~= "player") then
-		statFrame:Hide();
-		return;
-	end
-	
-	local chance = GetBlockChance();
-	MCF_PaperDollFrame_SetLabelAndText(statFrame, STAT_BLOCK, chance, 1);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, BLOCK_CHANCE).." "..string.format("%.02f", chance).."%"..FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(L["MCF_CR_BLOCK_TOOLTIP"], GetCombatRating(CR_BLOCK), GetCombatRatingBonus(CR_BLOCK), GetShieldBlock());
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetParry(statFrame, unit)
-	if (unit ~= "player") then
-		statFrame:Hide();
-		return;
-	end
-	
-	local chance = GetParryChance();
-	MCF_PaperDollFrame_SetLabelAndText(statFrame, L["MCF_STAT_PARRY"], chance, 1);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, PARRY_CHANCE).." "..string.format("%.02f", chance).."%"..FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(CR_PARRY_TOOLTIP, GetCombatRating(CR_PARRY), GetCombatRatingBonus(CR_PARRY));
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetResilience(statFrame, unit)
-	if (unit ~= "player") then
-		statFrame:Hide();
-		return;
-	end
-
-	local damageResilience = GetCombatRating(CR_RESILIENCE_CRIT_TAKEN);
-	local damageRatingBonus = GetCombatRatingBonus(CR_RESILIENCE_CRIT_TAKEN);
-	local maxBonus = GetMaxCombatRatingBonus(CR_RESILIENCE_CRIT_TAKEN);
-	MCF_PaperDollFrame_SetLabelAndText(statFrame, STAT_RESILIENCE, damageResilience);
-	
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_RESILIENCE).." "..damageResilience..FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(RESILIENCE_TOOLTIP, damageRatingBonus, min(damageRatingBonus * RESILIENCE_CRIT_CHANCE_TO_DAMAGE_REDUCTION_MULTIPLIER, maxBonus), damageRatingBonus * RESILIENCE_CRIT_CHANCE_TO_CONSTANT_DAMAGE_REDUCTION_MULTIPLIER);
-	statFrame:Show();
-end
-
+-- MELEE
 function MCF_PaperDollFrame_SetDamage(statFrame, unit)
 	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, DAMAGE));
 	local text = _G[statFrame:GetName().."StatText"];
@@ -1714,92 +1134,21 @@ function MCF_PaperDollFrame_SetMeleeDPS(statFrame, unit)
 	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..DAMAGE_PER_SECOND..FONT_COLOR_CODE_CLOSE;
 	statFrame:Show();
 end
-
-function MCF_PaperDollFrame_SetRangedDPS(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_DPS_SHORT"]));
+-- needs improvement because function GetOverrideSpellPowerByAP() doesn't work anymore
+function MCF_PaperDollFrame_SetAttackPower(statFrame, unit)
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_ATTACK_POWER"]));
 	local text = _G[statFrame:GetName().."StatText"];
+	local base, posBuff, negBuff = UnitAttackPower(unit);
 
-	-- If no ranged attack then set to n/a
-	local hasRelic = UnitHasRelicSlot(unit);	
-	local rangedTexture = GetInventoryItemTexture("player", 18);
-	if ( rangedTexture and not hasRelic ) then
-		PaperDollFrame.noRanged = nil;
+	MCF_PaperDollFormatStat(MELEE_ATTACK_POWER, base, posBuff, negBuff, statFrame, text);
+	local damageBonus = max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER;
+	local effectiveAP = max(0,base + posBuff + negBuff);
+	--[[ if (GetOverrideSpellPowerByAP() ~= nil) then
+		statFrame.tooltip2 = format(MELEE_ATTACK_POWER_SPELL_POWER_TOOLTIP, damageBonus, effectiveAP * GetOverrideSpellPowerByAP() + 0.5);
 	else
-		text:SetText(NOT_APPLICABLE);
-		PaperDollFrame.noRanged = 1;
-		statFrame.damage = nil;
-		return;
-	end
-
-	local rangedAttackSpeed, minDamage, maxDamage, physicalBonusPos, physicalBonusNeg, percent = UnitRangedDamage(unit);
-	
-	-- Round to the third decimal place (i.e. 99.9 percent)
-	percent = math.floor(percent  * 10^3 + 0.5) / 10^3
-	local displayMin = max(floor(minDamage),1);
-	local displayMax = max(ceil(maxDamage),1);
-
-	local baseDamage;
-	local fullDamage;
-	local totalBonus;
-	local damagePerSecond;
-	local tooltip;
-
-	if ( HasWandEquipped() ) then
-		baseDamage = (minDamage + maxDamage) * 0.5;
-		fullDamage = baseDamage * percent;
-		totalBonus = 0;
-		if( rangedAttackSpeed == 0 ) then
-			damagePerSecond = 0;
-		else
-			damagePerSecond = (max(fullDamage,1) / rangedAttackSpeed);
-		end
-		tooltip = max(floor(minDamage),1).." - "..max(ceil(maxDamage),1);
-	else
-		minDamage = (minDamage / percent) - physicalBonusPos - physicalBonusNeg;
-		maxDamage = (maxDamage / percent) - physicalBonusPos - physicalBonusNeg;
-
-		baseDamage = (minDamage + maxDamage) * 0.5;
-		fullDamage = (baseDamage + physicalBonusPos + physicalBonusNeg) * percent;
-		totalBonus = (fullDamage - baseDamage);
-		if( rangedAttackSpeed == 0 ) then
-			damagePerSecond = 0;
-		else
-			damagePerSecond = (max(fullDamage,1) / rangedAttackSpeed);
-		end
-		tooltip = max(floor(minDamage),1).." - "..max(ceil(maxDamage),1);
-	end
-
-	if ( totalBonus == 0 ) then
-		text:SetText( format("%.1F", damagePerSecond));
-	else
-		local colorPos = "|cff20ff20";
-		local colorNeg = "|cffff2020";
-		local color;
-		if ( totalBonus > 0 ) then
-			color = colorPos;
-		else
-			color = colorNeg;
-		end
-		text:SetText(color..format("%.1F", damagePerSecond).."|r");
-		if ( physicalBonusPos > 0 ) then
-			tooltip = tooltip..colorPos.." +"..physicalBonusPos.."|r";
-		end
-		if ( physicalBonusNeg < 0 ) then
-			tooltip = tooltip..colorNeg.." "..physicalBonusNeg.."|r";
-		end
-		if ( percent > 1 ) then
-			tooltip = tooltip..colorPos.." x"..floor(percent*100+0.5).."%|r";
-		elseif ( percent < 1 ) then
-			tooltip = tooltip..colorNeg.." x"..floor(percent*100+0.5).."%|r";
-		end
-		--statFrame.tooltip2 = tooltip.." "..format(DPS_TEMPLATE, damagePerSecond);
-	end
-
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..DAMAGE_PER_SECOND..FONT_COLOR_CODE_CLOSE;
+		statFrame.tooltip2 = format(MELEE_ATTACK_POWER_TOOLTIP, damageBonus);
+	end ]] --MCFFIX disabled if condition, copied tooltip generation (next line)
+	statFrame.tooltip2 = format(MELEE_ATTACK_POWER_TOOLTIP, damageBonus);
 	statFrame:Show();
 end
 
@@ -1822,67 +1171,103 @@ function MCF_PaperDollFrame_SetAttackSpeed(statFrame, unit)
 	statFrame:Show();
 end
 
--- needs improvement because function GetOverrideSpellPowerByAP() doesn't work anymore
-function MCF_PaperDollFrame_SetAttackPower(statFrame, unit)
-    _G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_ATTACK_POWER"]));
-    local text = _G[statFrame:GetName().."StatText"];
-    local base, posBuff, negBuff = UnitAttackPower(unit);
-
-    MCF_PaperDollFormatStat(MELEE_ATTACK_POWER, base, posBuff, negBuff, statFrame, text);
-    local damageBonus = max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER;
-    local effectiveAP = max(0,base + posBuff + negBuff);
-    --[[ if (GetOverrideSpellPowerByAP() ~= nil) then
-        statFrame.tooltip2 = format(MELEE_ATTACK_POWER_SPELL_POWER_TOOLTIP, damageBonus, effectiveAP * GetOverrideSpellPowerByAP() + 0.5);
-    else
-        statFrame.tooltip2 = format(MELEE_ATTACK_POWER_TOOLTIP, damageBonus);
-    end ]] --MCFFIX disabled if condition, copied tooltip generation (next line)
-    statFrame.tooltip2 = format(MELEE_ATTACK_POWER_TOOLTIP, damageBonus);
-    statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetRangedAttack(statFrame, unit)
+function MCF_PaperDollFrame_SetMeleeHaste(statFrame, unit)
 	if ( unit ~= "player" ) then
 		statFrame:Hide();
 		return;
 	end
-
-	local hasRelic = UnitHasRelicSlot(unit);
-	local rangedAttackBase, rangedAttackMod = UnitRangedAttack(unit);
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, COMBAT_RATING_NAME1));
-	local text = _G[statFrame:GetName().."StatText"];
-
-	-- If no ranged texture then set stats to n/a
-	local rangedTexture = GetInventoryItemTexture("player", 18);
-	if ( rangedTexture and not hasRelic ) then
-		PaperDollFrame.noRanged = nil;
+	
+	local haste = GetMeleeHaste();
+	if (haste < 0) then
+		haste = RED_FONT_COLOR_CODE..format("%.2F%%", haste)..FONT_COLOR_CODE_CLOSE;
 	else
-		text:SetText(NOT_APPLICABLE);
-		PaperDollFrame.noRanged = 1;
-		statFrame.tooltip = nil;
-		return;
+		haste = "+"..format("%.2F%%", haste);
 	end
 	
-	if( rangedAttackMod == 0 ) then
-		text:SetText(rangedAttackBase);
-		statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, COMBAT_RATING_NAME1).." "..rangedAttackBase..FONT_COLOR_CODE_CLOSE;
-	else
-		local color = RED_FONT_COLOR_CODE;
-		if( rangedAttackMod > 0 ) then
-	  		color = GREEN_FONT_COLOR_CODE;
-			statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, COMBAT_RATING_NAME1).." "..(rangedAttackBase + rangedAttackMod).." ("..rangedAttackBase..color.." +"..rangedAttackMod..FONT_COLOR_CODE_CLOSE..HIGHLIGHT_FONT_COLOR_CODE..")";
-		else
-			statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, COMBAT_RATING_NAME1).." "..(rangedAttackBase + rangedAttackMod).." ("..rangedAttackBase..color.." "..rangedAttackMod..FONT_COLOR_CODE_CLOSE..HIGHLIGHT_FONT_COLOR_CODE..")";
-		end
-		text:SetText(color..(rangedAttackBase + rangedAttackMod)..FONT_COLOR_CODE_CLOSE);
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_HASTE"]));	
+	local text = _G[statFrame:GetName().."StatText"];
+	text:SetText(haste);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_HASTE"]) .. " " .. haste .. FONT_COLOR_CODE_CLOSE;
+	
+	local _, class = UnitClass(unit);	
+	statFrame.tooltip2 = _G["STAT_HASTE_MELEE_"..class.."_TOOLTIP"];
+	if (not statFrame.tooltip2) then
+		statFrame.tooltip2 = STAT_HASTE_MELEE_TOOLTIP;
 	end
-	local total = GetCombatRating(CR_WEAPON_SKILL) + GetCombatRating(CR_WEAPON_SKILL_RANGED);
-	statFrame.tooltip2 = format(WEAPON_SKILL_RATING, total);
-	if ( total > 0 ) then
-		statFrame.tooltip2 = statFrame.tooltip2..format(WEAPON_SKILL_RATING_BONUS, GetCombatRatingBonus(CR_WEAPON_SKILL) + GetCombatRatingBonus(CR_WEAPON_SKILL_RANGED));
-	end
+	statFrame.tooltip2 = statFrame.tooltip2 .. format(L["MCF_STAT_HASTE_BASE_TOOLTIP"], GetCombatRating(CR_HASTE_MELEE), GetCombatRatingBonus(CR_HASTE_MELEE));
+	
 	statFrame:Show();
 end
 
+function MCF_PaperDollFrame_SetMeleeHitChance(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
+	local text = _G[statFrame:GetName().."StatText"];
+	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+	if (hitChance >= 0) then
+		hitChance = format("+%.2F%%", hitChance);
+	else
+		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	text:SetText(hitChance);
+	statFrame:SetScript("OnEnter", MCF_MeleeHitChance_OnEnter);
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetMeleeCritChance(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, MELEE_CRIT_CHANCE));
+	local text = _G[statFrame:GetName().."StatText"];
+	local critChance = GetCritChance();
+	critChance = format("%.2F%%", critChance);
+	text:SetText(critChance);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, MELEE_CRIT_CHANCE).." "..critChance..FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(L["MCF_CR_CRIT_MELEE_TOOLTIP"], GetCombatRating(CR_CRIT_MELEE), GetCombatRatingBonus(CR_CRIT_MELEE));
+end
+
+function MCF_PaperDollFrame_SetArmorPenetration(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_ARMOR_PENETRATION"]));
+	local text = _G[statFrame:GetName().."StatText"];
+	local armorPenetration = GetArmorPenetration();
+	armorPenetration = format("%.2F%%", armorPenetration);
+	text:SetText(armorPenetration);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_ARMOR_PENETRATION"]).." "..armorPenetration..FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(L["MCF_CR_ARMOR_PENETRATION_TOOLTIP"], GetCombatRating(CR_ARMOR_PENETRATION), GetCombatRatingBonus(CR_ARMOR_PENETRATION));
+end
+
+function MCF_PaperDollFrame_SetExpertise(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	local expertise, offhandExpertise = GetExpertise();
+	local speed, offhandSpeed = UnitAttackSpeed(unit);
+	local text;
+	if( offhandSpeed ) then
+		text = expertise.." / "..offhandExpertise;
+	else
+		text = expertise;
+	end
+	MCF_PaperDollFrame_SetLabelAndText(statFrame, STAT_EXPERTISE, text);
+	statFrame:SetScript("OnEnter", MCF_Expertise_OnEnter);
+	statFrame:Show();
+end
+
+-- RANGED
 function MCF_PaperDollFrame_SetRangedDamage(statFrame, unit)
 	if ( unit ~= "player" ) then
 		statFrame:Hide();
@@ -1981,22 +1366,91 @@ function MCF_PaperDollFrame_SetRangedDamage(statFrame, unit)
 	statFrame:Show();
 end
 
-function MCF_PaperDollFrame_SetRangedAttackSpeed(statFrame, unit)
+function MCF_PaperDollFrame_SetRangedDPS(statFrame, unit)
 	if ( unit ~= "player" ) then
 		statFrame:Hide();
 		return;
 	end
-	local text;
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_DPS_SHORT"]));
+	local text = _G[statFrame:GetName().."StatText"];
+
 	-- If no ranged attack then set to n/a
-	if ( PaperDollFrame.noRanged ) then
-		text = NOT_APPLICABLE;
-		statFrame.tooltip = nil;
+	local hasRelic = UnitHasRelicSlot(unit);	
+	local rangedTexture = GetInventoryItemTexture("player", 18);
+	if ( rangedTexture and not hasRelic ) then
+		PaperDollFrame.noRanged = nil;
 	else
-		text = UnitRangedDamage(unit);
-		text = format("%.2F", text);
-		statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, ATTACK_SPEED).." "..text..FONT_COLOR_CODE_CLOSE;
+		text:SetText(NOT_APPLICABLE);
+		PaperDollFrame.noRanged = 1;
+		statFrame.damage = nil;
+		return;
 	end
-	MCF_PaperDollFrame_SetLabelAndText(statFrame, L["MCF_WEAPON_SPEED"], text);
+
+	local rangedAttackSpeed, minDamage, maxDamage, physicalBonusPos, physicalBonusNeg, percent = UnitRangedDamage(unit);
+	
+	-- Round to the third decimal place (i.e. 99.9 percent)
+	percent = math.floor(percent  * 10^3 + 0.5) / 10^3
+	local displayMin = max(floor(minDamage),1);
+	local displayMax = max(ceil(maxDamage),1);
+
+	local baseDamage;
+	local fullDamage;
+	local totalBonus;
+	local damagePerSecond;
+	local tooltip;
+
+	if ( HasWandEquipped() ) then
+		baseDamage = (minDamage + maxDamage) * 0.5;
+		fullDamage = baseDamage * percent;
+		totalBonus = 0;
+		if( rangedAttackSpeed == 0 ) then
+			damagePerSecond = 0;
+		else
+			damagePerSecond = (max(fullDamage,1) / rangedAttackSpeed);
+		end
+		tooltip = max(floor(minDamage),1).." - "..max(ceil(maxDamage),1);
+	else
+		minDamage = (minDamage / percent) - physicalBonusPos - physicalBonusNeg;
+		maxDamage = (maxDamage / percent) - physicalBonusPos - physicalBonusNeg;
+
+		baseDamage = (minDamage + maxDamage) * 0.5;
+		fullDamage = (baseDamage + physicalBonusPos + physicalBonusNeg) * percent;
+		totalBonus = (fullDamage - baseDamage);
+		if( rangedAttackSpeed == 0 ) then
+			damagePerSecond = 0;
+		else
+			damagePerSecond = (max(fullDamage,1) / rangedAttackSpeed);
+		end
+		tooltip = max(floor(minDamage),1).." - "..max(ceil(maxDamage),1);
+	end
+
+	if ( totalBonus == 0 ) then
+		text:SetText( format("%.1F", damagePerSecond));
+	else
+		local colorPos = "|cff20ff20";
+		local colorNeg = "|cffff2020";
+		local color;
+		if ( totalBonus > 0 ) then
+			color = colorPos;
+		else
+			color = colorNeg;
+		end
+		text:SetText(color..format("%.1F", damagePerSecond).."|r");
+		if ( physicalBonusPos > 0 ) then
+			tooltip = tooltip..colorPos.." +"..physicalBonusPos.."|r";
+		end
+		if ( physicalBonusNeg < 0 ) then
+			tooltip = tooltip..colorNeg.." "..physicalBonusNeg.."|r";
+		end
+		if ( percent > 1 ) then
+			tooltip = tooltip..colorPos.." x"..floor(percent*100+0.5).."%|r";
+		elseif ( percent < 1 ) then
+			tooltip = tooltip..colorNeg.." x"..floor(percent*100+0.5).."%|r";
+		end
+		--statFrame.tooltip2 = tooltip.." "..format(DPS_TEMPLATE, damagePerSecond);
+	end
+
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..DAMAGE_PER_SECOND..FONT_COLOR_CODE_CLOSE;
 	statFrame:Show();
 end
 
@@ -2021,6 +1475,88 @@ function MCF_PaperDollFrame_SetRangedAttackPower(statFrame, unit)
 	statFrame:Show();
 end
 
+function MCF_PaperDollFrame_SetRangedAttackSpeed(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	local text;
+	-- If no ranged attack then set to n/a
+	if ( PaperDollFrame.noRanged ) then
+		text = NOT_APPLICABLE;
+		statFrame.tooltip = nil;
+	else
+		text = UnitRangedDamage(unit);
+		text = format("%.2F", text);
+		statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, ATTACK_SPEED).." "..text..FONT_COLOR_CODE_CLOSE;
+	end
+	MCF_PaperDollFrame_SetLabelAndText(statFrame, L["MCF_WEAPON_SPEED"], text);
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetRangedHaste(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	local haste = GetRangedHaste();
+	if (haste < 0) then
+		haste = RED_FONT_COLOR_CODE..format("%.2F%%", haste)..FONT_COLOR_CODE_CLOSE;
+	else
+		haste = "+"..format("%.2F%%", haste);
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_HASTE"]));
+	local text = _G[statFrame:GetName().."StatText"];
+	text:SetText(haste);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_HASTE"]) .. " " .. haste .. FONT_COLOR_CODE_CLOSE;
+
+	local _, class = UnitClass(unit);	
+	statFrame.tooltip2 = _G["STAT_HASTE_RANGED_"..class.."_TOOLTIP"];
+	if (not statFrame.tooltip2) then
+		statFrame.tooltip2 = STAT_HASTE_RANGED_TOOLTIP;
+	end
+	statFrame.tooltip2 = statFrame.tooltip2 .. format(L["MCF_STAT_HASTE_BASE_TOOLTIP"], GetCombatRating(CR_HASTE_RANGED), GetCombatRatingBonus(CR_HASTE_RANGED));
+
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetRangedHitChance(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
+	local text = _G[statFrame:GetName().."StatText"];
+	local hitChance = GetCombatRatingBonus(CR_HIT_RANGED);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+	if (hitChance >= 0) then
+		hitChance = format("+%.2F%%", hitChance);
+	else
+		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	text:SetText(hitChance);
+	statFrame:SetScript("OnEnter", MCF_RangedHitChance_OnEnter);
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetRangedCritChance(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, RANGED_CRIT_CHANCE));
+	local text = _G[statFrame:GetName().."StatText"];
+	local critChance = GetRangedCritChance();
+	critChance = format("%.2F%%", critChance);
+	text:SetText(critChance);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, RANGED_CRIT_CHANCE).." "..critChance..FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(L["MCF_CR_CRIT_RANGED_TOOLTIP"], GetCombatRating(CR_CRIT_RANGED), GetCombatRatingBonus(CR_CRIT_RANGED));
+end
+
+-- SPELLS
 function MCF_PaperDollFrame_SetSpellBonusDamage(statFrame, unit)
 	local text = _G[statFrame:GetName().."StatText"];
 	local minModifier = 0;
@@ -2113,6 +1649,116 @@ function MCF_PaperDollFrame_SetSpellBonusHealing(statFrame, unit)
 	statFrame:Show();
 end
 
+function MCF_PaperDollFrame_SetSpellHitChance(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
+	local text = _G[statFrame:GetName().."StatText"];
+	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);--[[  + GetSpellHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+	if (hitChance >= 0) then
+		hitChance = format("+%.2F%%", hitChance);
+	else
+		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	text:SetText(hitChance);
+	statFrame:SetScript("OnEnter", MCF_SpellHitChance_OnEnter);
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetSpellHaste(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	local haste = GetCombatRatingBonus(CR_HASTE_SPELL); --UnitSpellHaste(unit); --MCFFIX disabled deleted function. GetCombatRatingBonus doesn't calculate talents so needs rework
+	if (haste < 0) then
+		haste = RED_FONT_COLOR_CODE..format("%.2F%%", haste)..FONT_COLOR_CODE_CLOSE;
+	else
+		haste = "+"..format("%.2F%%", haste);
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_HASTE"]));
+	local text = _G[statFrame:GetName().."StatText"];
+	text:SetText(haste);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_HASTE"]) .. " " .. haste .. FONT_COLOR_CODE_CLOSE;
+	
+	local _, class = UnitClass(unit);	
+	statFrame.tooltip2 = _G["STAT_HASTE_SPELL_"..class.."_TOOLTIP"];
+	if (not statFrame.tooltip2) then
+		statFrame.tooltip2 = STAT_HASTE_SPELL_TOOLTIP;
+	end
+	statFrame.tooltip2 = statFrame.tooltip2 .. format(L["MCF_STAT_HASTE_BASE_TOOLTIP"], GetCombatRating(CR_HASTE_SPELL), GetCombatRatingBonus(CR_HASTE_SPELL));
+
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetSpellPenetration(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_SPELL_PENETRATION"]));
+	local text = _G[statFrame:GetName().."StatText"];
+	local spellPenetration = GetSpellPenetration();
+	text:SetText(spellPenetration);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE ..L["MCF_SPELL_PENETRATION"].. FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(L["MCF_SPELL_PENETRATION_TOOLTIP"], spellPenetration, spellPenetration);
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetManaRegen(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+	
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_MANA_REGEN"]));
+	local text = _G[statFrame:GetName().."StatText"];
+	if ( not UnitHasMana("player") ) then
+		text:SetText(NOT_APPLICABLE);
+		statFrame.tooltip = nil;
+		return;
+	end
+	
+	local base, casting = GetManaRegen();
+	-- All mana regen stats are displayed as mana/5 sec.
+	base = floor( base * 5.0 );
+	casting = floor( casting * 5.0 );
+	text:SetText(base);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. L["MCF_MANA_REGEN"] .. FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(L["MCF_MANA_REGEN_TOOLTIP"], base);
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetCombatManaRegen(statFrame, unit)
+	if ( unit ~= "player" ) then
+		statFrame:Hide();
+		return;
+	end
+
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, MANA_REGEN_COMBAT));
+	local text = _G[statFrame:GetName().."StatText"];
+	if ( not UnitHasMana("player") ) then
+		text:SetText(NOT_APPLICABLE);
+		statFrame.tooltip = nil;
+		return;
+	end
+	
+	local base, casting = GetManaRegen();
+	-- All mana regen stats are displayed as mana/5 sec.
+	base = floor( base * 5.0 );
+	casting = floor( casting * 5.0 );
+	text:SetText(casting);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. MANA_REGEN_COMBAT .. FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(MANA_COMBAT_REGEN_TOOLTIP, casting);
+	statFrame:Show();
+end
+
 function MCF_PaperDollFrame_SetSpellCritChance(statFrame, unit)
 	if ( unit ~= "player" ) then
 		statFrame:Hide();
@@ -2139,93 +1785,136 @@ function MCF_PaperDollFrame_SetSpellCritChance(statFrame, unit)
 	statFrame:Show();
 end
 
-function MCF_PaperDollFrame_SetMeleeCritChance(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, MELEE_CRIT_CHANCE));
+-- DEFENSE
+function MCF_PaperDollFrame_SetArmor(statFrame, unit)
+	local base, effectiveArmor, armor, posBuff, negBuff = UnitArmor(unit);
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, ARMOR));
 	local text = _G[statFrame:GetName().."StatText"];
-	local critChance = GetCritChance();
-	critChance = format("%.2F%%", critChance);
-	text:SetText(critChance);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, MELEE_CRIT_CHANCE).." "..critChance..FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(L["MCF_CR_CRIT_MELEE_TOOLTIP"], GetCombatRating(CR_CRIT_MELEE), GetCombatRatingBonus(CR_CRIT_MELEE));
-end
 
-function MCF_PaperDollFrame_SetRangedCritChance(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
+	MCF_PaperDollFormatStat(ARMOR, base, posBuff, negBuff, statFrame, text);
+	local armorReduction = MCF_PaperDollFrame_GetArmorReduction(effectiveArmor, UnitLevel(unit));
+	statFrame.tooltip2 = format(DEFAULT_STATARMOR_TOOLTIP, armorReduction);
+	
+	if ( unit == "player" ) then
+		local petBonus = MCF_ComputePetBonus("PET_BONUS_ARMOR", effectiveArmor );
+		if( petBonus > 0 ) then
+			statFrame.tooltip2 = statFrame.tooltip2 .. "\n" .. format(PET_BONUS_TOOLTIP_ARMOR, petBonus);
+		end
 	end
 	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, RANGED_CRIT_CHANCE));
-	local text = _G[statFrame:GetName().."StatText"];
-	local critChance = GetRangedCritChance();
-	critChance = format("%.2F%%", critChance);
-	text:SetText(critChance);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, RANGED_CRIT_CHANCE).." "..critChance..FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(L["MCF_CR_CRIT_RANGED_TOOLTIP"], GetCombatRating(CR_CRIT_RANGED), GetCombatRatingBonus(CR_CRIT_RANGED));
-end
-
-function MCF_PaperDollFrame_SetMeleeHitChance(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
-	local text = _G[statFrame:GetName().."StatText"];
-	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
-	if (hitChance >= 0) then
-		hitChance = format("+%.2F%%", hitChance);
-	else
-		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	text:SetText(hitChance);
-	statFrame:SetScript("OnEnter", MCF_MeleeHitChance_OnEnter);
 	statFrame:Show();
 end
 
-function MCF_PaperDollFrame_SetRangedHitChance(statFrame, unit)
-	if ( unit ~= "player" ) then
+function MCF_PaperDollFrame_SetDefense(statFrame, unit)
+	if (unit ~= "player") then
+		statFrame:Hide();
+		return;
+	end
+
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, DEFENSE));
+	local text = _G[statFrame:GetName().."StatText"];
+
+	local base, modifier = UnitDefense("player");
+	local posBuff = 0;
+	local negBuff = 0;
+	if ( modifier > 0 ) then
+		posBuff = modifier;
+	elseif ( modifier < 0 ) then
+		negBuff = modifier;
+	end
+	
+	local effective = MCF_PaperDollFormatStat(DEFENSE, base, posBuff, negBuff, statFrame, text, true);
+	text:SetText(effective);
+
+	statFrame:SetScript("OnEnter", MCF_Defense_OnEnter);
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetDodge(statFrame, unit)
+	if (unit ~= "player") then
 		statFrame:Hide();
 		return;
 	end
 	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
-	local text = _G[statFrame:GetName().."StatText"];
-	local hitChance = GetCombatRatingBonus(CR_HIT_RANGED);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
-	if (hitChance >= 0) then
-		hitChance = format("+%.2F%%", hitChance);
-	else
-		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	text:SetText(hitChance);
-	statFrame:SetScript("OnEnter", MCF_RangedHitChance_OnEnter);
+	local chance = GetDodgeChance();
+	MCF_PaperDollFrame_SetLabelAndText(statFrame, STAT_DODGE, chance, 1);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, DODGE_CHANCE).." "..string.format("%.02f", chance).."%"..FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(CR_DODGE_TOOLTIP, GetCombatRating(CR_DODGE), GetCombatRatingBonus(CR_DODGE));
 	statFrame:Show();
 end
 
-function MCF_PaperDollFrame_SetSpellHitChance(statFrame, unit)
-	if ( unit ~= "player" ) then
+function MCF_PaperDollFrame_SetParry(statFrame, unit)
+	if (unit ~= "player") then
 		statFrame:Hide();
 		return;
 	end
 	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
-	local text = _G[statFrame:GetName().."StatText"];
-	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);--[[  + GetSpellHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
-	if (hitChance >= 0) then
-		hitChance = format("+%.2F%%", hitChance);
-	else
-		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
-	end
-	text:SetText(hitChance);
-	statFrame:SetScript("OnEnter", MCF_SpellHitChance_OnEnter);
+	local chance = GetParryChance();
+	MCF_PaperDollFrame_SetLabelAndText(statFrame, L["MCF_STAT_PARRY"], chance, 1);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, PARRY_CHANCE).." "..string.format("%.02f", chance).."%"..FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(CR_PARRY_TOOLTIP, GetCombatRating(CR_PARRY), GetCombatRatingBonus(CR_PARRY));
 	statFrame:Show();
 end
 
+function MCF_PaperDollFrame_SetBlock(statFrame, unit)
+	if (unit ~= "player") then
+		statFrame:Hide();
+		return;
+	end
+	
+	local chance = GetBlockChance();
+	MCF_PaperDollFrame_SetLabelAndText(statFrame, STAT_BLOCK, chance, 1);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, BLOCK_CHANCE).." "..string.format("%.02f", chance).."%"..FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(L["MCF_CR_BLOCK_TOOLTIP"], GetCombatRating(CR_BLOCK), GetCombatRatingBonus(CR_BLOCK), GetShieldBlock());
+	statFrame:Show();
+end
+
+function MCF_PaperDollFrame_SetResilience(statFrame, unit)
+	if (unit ~= "player") then
+		statFrame:Hide();
+		return;
+	end
+
+	local damageResilience = GetCombatRating(CR_RESILIENCE_CRIT_TAKEN);
+	local damageRatingBonus = GetCombatRatingBonus(CR_RESILIENCE_CRIT_TAKEN);
+	local maxBonus = GetMaxCombatRatingBonus(CR_RESILIENCE_CRIT_TAKEN);
+	MCF_PaperDollFrame_SetLabelAndText(statFrame, STAT_RESILIENCE, damageResilience);
+	
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_RESILIENCE).." "..damageResilience..FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = format(RESILIENCE_TOOLTIP, damageRatingBonus, min(damageRatingBonus * RESILIENCE_CRIT_CHANCE_TO_DAMAGE_REDUCTION_MULTIPLIER, maxBonus), damageRatingBonus * RESILIENCE_CRIT_CHANCE_TO_CONSTANT_DAMAGE_REDUCTION_MULTIPLIER);
+	statFrame:Show();
+end
+
+-- RESISTANCE
+-- MCF TODO: Add racial resistance buffs
+function MCF_PaperDollFrame_SetResistance(statFrame, unit, resistanceIndex)
+	local base, resistance, positive, negative = UnitResistance(unit, resistanceIndex);
+	local resistanceNameShort = _G["DAMAGE_SCHOOL"..(resistanceIndex+1)];
+	local resistanceName = _G["RESISTANCE"..resistanceIndex.."_NAME"];
+	local resistanceIconCode = "|TInterface\\PaperDollInfoFrame\\SpellSchoolIcon"..(resistanceIndex+1)..":0|t";
+	_G[statFrame:GetName().."Label"]:SetText(resistanceIconCode.." "..format(STAT_FORMAT, resistanceNameShort));
+	local text = _G[statFrame:GetName().."StatText"];
+	MCF_PaperDollFormatStat(resistanceName, base, positive, negative, statFrame, text);
+	statFrame.tooltip = resistanceIconCode.." "..HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, resistanceName).." "..resistance..FONT_COLOR_CODE_CLOSE;
+	
+	if ( positive ~= 0 or negative ~= 0 ) then
+		statFrame.tooltip = statFrame.tooltip.. " ( "..HIGHLIGHT_FONT_COLOR_CODE..base;
+		if( positive > 0 ) then
+			statFrame.tooltip = statFrame.tooltip..GREEN_FONT_COLOR_CODE.." +"..positive;
+		end
+		if( negative < 0 ) then
+			statFrame.tooltip = statFrame.tooltip.." "..RED_FONT_COLOR_CODE..negative;
+		end
+		statFrame.tooltip = statFrame.tooltip..FONT_COLOR_CODE_CLOSE.." )";
+	end
+	
+	statFrame.tooltip2 = format(L["MCF_RESISTANCE_TOOLTIP_SUBTEXT"], _G["SPELL_SCHOOL"..resistanceIndex.."_CAP"], ResistancePercent(resistance, UnitLevel(unit)));
+	
+	-- TODO: Put this in the tooltip?
+	--local petBonus = ComputePetBonus( "PET_BONUS_RES", resistance );
+end
+
+-- VARIOUS
 function MCF_PaperDollFrame_SetEnergyRegen(statFrame, unit)
 	if ( unit ~= "player" ) then
 		statFrame:Hide();
@@ -2286,185 +1975,50 @@ function MCF_PaperDollFrame_SetRuneRegen(statFrame, unit)
 	statFrame:Show();
 end
 
-function MCF_PaperDollFrame_SetMeleeHaste(statFrame, unit)
+
+
+-- UNUSED
+function MCF_PaperDollFrame_SetRangedAttack(statFrame, unit)
 	if ( unit ~= "player" ) then
 		statFrame:Hide();
 		return;
 	end
-	
-	local haste = GetMeleeHaste();
-	if (haste < 0) then
-		haste = RED_FONT_COLOR_CODE..format("%.2F%%", haste)..FONT_COLOR_CODE_CLOSE;
+
+	local hasRelic = UnitHasRelicSlot(unit);
+	local rangedAttackBase, rangedAttackMod = UnitRangedAttack(unit);
+	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, COMBAT_RATING_NAME1));
+	local text = _G[statFrame:GetName().."StatText"];
+
+	-- If no ranged texture then set stats to n/a
+	local rangedTexture = GetInventoryItemTexture("player", 18);
+	if ( rangedTexture and not hasRelic ) then
+		PaperDollFrame.noRanged = nil;
 	else
-		haste = "+"..format("%.2F%%", haste);
-	end
-	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_HASTE"]));	
-	local text = _G[statFrame:GetName().."StatText"];
-	text:SetText(haste);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_HASTE"]) .. " " .. haste .. FONT_COLOR_CODE_CLOSE;
-	
-	local _, class = UnitClass(unit);	
-	statFrame.tooltip2 = _G["STAT_HASTE_MELEE_"..class.."_TOOLTIP"];
-	if (not statFrame.tooltip2) then
-		statFrame.tooltip2 = STAT_HASTE_MELEE_TOOLTIP;
-	end
-	statFrame.tooltip2 = statFrame.tooltip2 .. format(L["MCF_STAT_HASTE_BASE_TOOLTIP"], GetCombatRating(CR_HASTE_MELEE), GetCombatRatingBonus(CR_HASTE_MELEE));
-	
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetRangedHaste(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	
-	local haste = GetRangedHaste();
-	if (haste < 0) then
-		haste = RED_FONT_COLOR_CODE..format("%.2F%%", haste)..FONT_COLOR_CODE_CLOSE;
-	else
-		haste = "+"..format("%.2F%%", haste);
-	end
-	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_HASTE"]));
-	local text = _G[statFrame:GetName().."StatText"];
-	text:SetText(haste);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_HASTE"]) .. " " .. haste .. FONT_COLOR_CODE_CLOSE;
-
-	local _, class = UnitClass(unit);	
-	statFrame.tooltip2 = _G["STAT_HASTE_RANGED_"..class.."_TOOLTIP"];
-	if (not statFrame.tooltip2) then
-		statFrame.tooltip2 = STAT_HASTE_RANGED_TOOLTIP;
-	end
-	statFrame.tooltip2 = statFrame.tooltip2 .. format(L["MCF_STAT_HASTE_BASE_TOOLTIP"], GetCombatRating(CR_HASTE_RANGED), GetCombatRatingBonus(CR_HASTE_RANGED));
-
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetSpellPenetration(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_SPELL_PENETRATION"]));
-	local text = _G[statFrame:GetName().."StatText"];
-	local spellPenetration = GetSpellPenetration();
-	text:SetText(spellPenetration);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE ..L["MCF_SPELL_PENETRATION"].. FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(L["MCF_SPELL_PENETRATION_TOOLTIP"], spellPenetration, spellPenetration);
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetSpellHaste(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	
-	local haste = GetCombatRatingBonus(CR_HASTE_SPELL); --UnitSpellHaste(unit); --MCFFIX disabled deleted function. GetCombatRatingBonus doesn't calculate talents so needs rework
-	if (haste < 0) then
-		haste = RED_FONT_COLOR_CODE..format("%.2F%%", haste)..FONT_COLOR_CODE_CLOSE;
-	else
-		haste = "+"..format("%.2F%%", haste);
-	end
-	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_HASTE"]));
-	local text = _G[statFrame:GetName().."StatText"];
-	text:SetText(haste);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_HASTE"]) .. " " .. haste .. FONT_COLOR_CODE_CLOSE;
-	
-	local _, class = UnitClass(unit);	
-	statFrame.tooltip2 = _G["STAT_HASTE_SPELL_"..class.."_TOOLTIP"];
-	if (not statFrame.tooltip2) then
-		statFrame.tooltip2 = STAT_HASTE_SPELL_TOOLTIP;
-	end
-	statFrame.tooltip2 = statFrame.tooltip2 .. format(L["MCF_STAT_HASTE_BASE_TOOLTIP"], GetCombatRating(CR_HASTE_SPELL), GetCombatRatingBonus(CR_HASTE_SPELL));
-
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetManaRegen(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_MANA_REGEN"]));
-	local text = _G[statFrame:GetName().."StatText"];
-	if ( not UnitHasMana("player") ) then
 		text:SetText(NOT_APPLICABLE);
+		PaperDollFrame.noRanged = 1;
 		statFrame.tooltip = nil;
 		return;
 	end
 	
-	local base, casting = GetManaRegen();
-	-- All mana regen stats are displayed as mana/5 sec.
-	base = floor( base * 5.0 );
-	casting = floor( casting * 5.0 );
-	text:SetText(base);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. L["MCF_MANA_REGEN"] .. FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(L["MCF_MANA_REGEN_TOOLTIP"], base);
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetCombatManaRegen(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, MANA_REGEN_COMBAT));
-	local text = _G[statFrame:GetName().."StatText"];
-	if ( not UnitHasMana("player") ) then
-		text:SetText(NOT_APPLICABLE);
-		statFrame.tooltip = nil;
-		return;
-	end
-	
-	local base, casting = GetManaRegen();
-	-- All mana regen stats are displayed as mana/5 sec.
-	base = floor( base * 5.0 );
-	casting = floor( casting * 5.0 );
-	text:SetText(casting);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. MANA_REGEN_COMBAT .. FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(MANA_COMBAT_REGEN_TOOLTIP, casting);
-	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetExpertise(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	
-	local expertise, offhandExpertise = GetExpertise();
-	local speed, offhandSpeed = UnitAttackSpeed(unit);
-	local text;
-	if( offhandSpeed ) then
-		text = expertise.." / "..offhandExpertise;
+	if( rangedAttackMod == 0 ) then
+		text:SetText(rangedAttackBase);
+		statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, COMBAT_RATING_NAME1).." "..rangedAttackBase..FONT_COLOR_CODE_CLOSE;
 	else
-		text = expertise;
+		local color = RED_FONT_COLOR_CODE;
+		if( rangedAttackMod > 0 ) then
+	  		color = GREEN_FONT_COLOR_CODE;
+			statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, COMBAT_RATING_NAME1).." "..(rangedAttackBase + rangedAttackMod).." ("..rangedAttackBase..color.." +"..rangedAttackMod..FONT_COLOR_CODE_CLOSE..HIGHLIGHT_FONT_COLOR_CODE..")";
+		else
+			statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, COMBAT_RATING_NAME1).." "..(rangedAttackBase + rangedAttackMod).." ("..rangedAttackBase..color.." "..rangedAttackMod..FONT_COLOR_CODE_CLOSE..HIGHLIGHT_FONT_COLOR_CODE..")";
+		end
+		text:SetText(color..(rangedAttackBase + rangedAttackMod)..FONT_COLOR_CODE_CLOSE);
 	end
-	MCF_PaperDollFrame_SetLabelAndText(statFrame, STAT_EXPERTISE, text);
-	statFrame:SetScript("OnEnter", MCF_Expertise_OnEnter);
+	local total = GetCombatRating(CR_WEAPON_SKILL) + GetCombatRating(CR_WEAPON_SKILL_RANGED);
+	statFrame.tooltip2 = format(WEAPON_SKILL_RATING, total);
+	if ( total > 0 ) then
+		statFrame.tooltip2 = statFrame.tooltip2..format(WEAPON_SKILL_RATING_BONUS, GetCombatRatingBonus(CR_WEAPON_SKILL) + GetCombatRatingBonus(CR_WEAPON_SKILL_RANGED));
+	end
 	statFrame:Show();
-end
-
-function MCF_PaperDollFrame_SetArmorPenetration(statFrame, unit)
-	if ( unit ~= "player" ) then
-		statFrame:Hide();
-		return;
-	end
-	
-	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_ARMOR_PENETRATION"]));
-	local text = _G[statFrame:GetName().."StatText"];
-	local armorPenetration = GetArmorPenetration();
-	armorPenetration = format("%.2F%%", armorPenetration);
-	text:SetText(armorPenetration);
-	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_ARMOR_PENETRATION"]).." "..armorPenetration..FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = format(L["MCF_CR_ARMOR_PENETRATION_TOOLTIP"], GetCombatRating(CR_ARMOR_PENETRATION), GetCombatRatingBonus(CR_ARMOR_PENETRATION));
 end
 
 -- Disabled completely because mastery doesn't exist in WotLK
@@ -2485,4 +2039,479 @@ end
 	text:SetText(mastery);
 	statFrame:SetScript("OnEnter", MCF_Mastery_OnEnter);
 	statFrame:Show();
+end ]]
+
+----------------------------------------------------------------------------------
+--------------------------------- STATS ON ENTER ---------------------------------
+----------------------------------------------------------------------------------
+-- GENERAL
+function MCF_MovementSpeed_OnEnter(statFrame)
+	if (MOVING_STAT_CATEGORY) then return; end
+	
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_MOVEMENT_SPEED).." "..format("%d%%", statFrame.speed+0.5)..FONT_COLOR_CODE_CLOSE);
+	
+	GameTooltip:AddLine(format(STAT_MOVEMENT_GROUND_TOOLTIP, statFrame.runSpeed+0.5));
+	if (statFrame.unit ~= "pet") then
+		GameTooltip:AddLine(format(STAT_MOVEMENT_FLIGHT_TOOLTIP, statFrame.flightSpeed+0.5));
+	end
+	GameTooltip:AddLine(format(STAT_MOVEMENT_SWIM_TOOLTIP, statFrame.swimSpeed+0.5));
+	GameTooltip:Show();
+	
+	statFrame.UpdateTooltip = MCF_MovementSpeed_OnEnter;
+end
+
+-- MELEE
+function MCF_CharacterDamageFrame_OnEnter(self)
+	if (MOVING_STAT_CATEGORY) then return; end
+	-- Main hand weapon
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	if ( self.unit == "pet" ) then
+		GameTooltip:SetText(INVTYPE_WEAPONMAINHAND_PET, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	else
+		GameTooltip:SetText(INVTYPE_WEAPONMAINHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	end
+	GameTooltip:AddDoubleLine(format(STAT_FORMAT, ATTACK_SPEED_SECONDS), format("%.2F", self.attackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE), self.damage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE_PER_SECOND), format("%.1F", self.dps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	-- Check for offhand weapon
+	if ( self.offhandAttackSpeed ) then
+		GameTooltip:AddLine("\n");
+		GameTooltip:AddLine(INVTYPE_WEAPONOFFHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+		GameTooltip:AddDoubleLine(format(STAT_FORMAT, ATTACK_SPEED_SECONDS), format("%.2F", self.offhandAttackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE), self.offhandDamage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE_PER_SECOND), format("%.1F", self.offhandDps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+	GameTooltip:Show();
+end
+
+function MCF_MeleeHitChance_OnEnter(statFrame)
+
+	if (MOVING_STAT_CATEGORY) then return; end
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+	if (hitChance >= 0) then
+		hitChance = format("+%.2F%%", hitChance);
+	else
+		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
+	GameTooltip:AddLine(format(STAT_HIT_MELEE_TOOLTIP, GetCombatRating(CR_HIT_MELEE), GetCombatRatingBonus(CR_HIT_MELEE)));
+	GameTooltip:AddLine(" ");
+	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	if (IsDualWielding()) then
+		GameTooltip:AddLine(STAT_HIT_NORMAL_ATTACKS, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
+	end
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local missChance = format("%.2F%%", MCF_GetMeleeMissChance(i, false));
+		local level = playerLevel + i;
+			if (i == 3) then
+				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+			end
+		GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+	
+	if (IsDualWielding()) then
+		GameTooltip:AddLine(STAT_HIT_SPECIAL_ATTACKS, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
+		for i=0, 3 do
+			local missChance = format("%.2F%%", MCF_GetMeleeMissChance(i, true));
+			local level = playerLevel + i;
+			if (i == 3) then
+				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+			end
+			GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		end
+	end
+	
+	GameTooltip:Show();
+end
+
+function MCF_Expertise_OnEnter(statFrame)
+	if (MOVING_STAT_CATEGORY) then
+		return;
+	end
+
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+	local expertise, offhandExpertise = GetExpertise();
+	local expertisePercent, offhandExpertisePercent = GetExpertisePercent();
+	expertisePercent = format("%.2F", expertisePercent);
+	offhandExpertisePercent = format("%.2F", offhandExpertisePercent);
+	
+	local expertiseDisplay, expertisePercentDisplay;
+	if (IsDualWielding()) then
+		expertiseDisplay = expertise.." / "..offhandExpertise;
+		expertisePercentDisplay = expertisePercent.."% / "..offhandExpertisePercent.."%";
+	else
+		expertiseDisplay = expertise;
+		expertisePercentDisplay = expertisePercent.."%";
+	end
+	
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, _G["COMBAT_RATING_NAME"..CR_EXPERTISE]).." "..expertiseDisplay..FONT_COLOR_CODE_CLOSE);
+	GameTooltip:AddLine(format(L["MCF_CR_EXPERTISE_TOOLTIP"], expertisePercentDisplay, GetCombatRating(CR_EXPERTISE), GetCombatRatingBonus(CR_EXPERTISE)), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
+	GameTooltip:AddLine(" ");
+	
+	-- Dodge chance
+	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, DODGE_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local mainhandDodge, offhandDodge = MCF_GetEnemyDodgeChance(i);
+		mainhandDodge = format("%.2F%%", mainhandDodge);
+		offhandDodge = format("%.2F%%", offhandDodge);
+		local level = playerLevel + i;
+		if (i == 3) then
+			level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+		end
+		local dodgeDisplay;
+		if (IsDualWielding() and mainhandDodge ~= offhandDodge) then
+			dodgeDisplay = mainhandDodge.." / "..offhandDodge;
+		else
+			dodgeDisplay = mainhandDodge.."  ";
+		end
+		GameTooltip:AddDoubleLine("      "..level, dodgeDisplay.."  ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+	
+	-- Parry chance
+	GameTooltip:AddLine(" ");
+	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, PARRY_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local mainhandParry, offhandParry = MCF_GetEnemyParryChance(i);
+		mainhandParry = format("%.2F%%", mainhandParry);
+		offhandParry = format("%.2F%%", offhandParry);
+		local level = playerLevel + i;
+		if (i == 3) then
+			level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+		end
+		local parryDisplay;
+		if (IsDualWielding() and mainhandParry ~= offhandParry) then
+			parryDisplay = mainhandParry.." / "..offhandParry;
+		else
+			parryDisplay = mainhandParry.."  ";
+		end
+		GameTooltip:AddDoubleLine("      "..level, parryDisplay.."  ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+		
+	GameTooltip:Show();
+end
+
+-- RANGED
+function MCF_CharacterRangedDamageFrame_OnEnter(self)
+	if (MOVING_STAT_CATEGORY) then return; end
+	if ( not self.damage ) then
+		return;
+	end
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip:SetText(INVTYPE_RANGED, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	GameTooltip:AddDoubleLine(format(STAT_FORMAT, ATTACK_SPEED_SECONDS), format("%.2F", self.attackSpeed), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE), self.damage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	GameTooltip:AddDoubleLine(format(STAT_FORMAT, DAMAGE_PER_SECOND), format("%.1F", self.dps), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	GameTooltip:Show();
+end
+
+function MCF_RangedHitChance_OnEnter(statFrame)
+
+	if (MOVING_STAT_CATEGORY) then return; end
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+	local hitChance = GetCombatRatingBonus(CR_HIT_RANGED);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+	if (hitChance >= 0) then
+		hitChance = format("+%.2F%%", hitChance);
+	else
+		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
+	GameTooltip:AddLine(format(STAT_HIT_RANGED_TOOLTIP, GetCombatRating(CR_HIT_RANGED), GetCombatRatingBonus(CR_HIT_RANGED)));
+	GameTooltip:AddLine(" ");
+	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local missChance = format("%.2F%%", MCF_GetRangedMissChance(i));
+		local level = playerLevel + i;
+			if (i == 3) then
+				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+			end
+		GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+		
+	GameTooltip:Show();
+end
+
+-- SPELLS
+function MCF_CharacterSpellBonusDamage_OnEnter(self)
+	if (MOVING_STAT_CATEGORY) then return; end
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, self.tooltip).." "..self.minModifier..FONT_COLOR_CODE_CLOSE);
+
+	for i=2, MAX_SPELL_SCHOOLS do
+		if (self.bonusDamage and self.bonusDamage[i] ~= self.minModifier) then
+			GameTooltip:AddLine(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, _G["DAMAGE_SCHOOL"..i]).." "..self.bonusDamage[i]..FONT_COLOR_CODE_CLOSE);
+			GameTooltip:AddTexture("Interface\\PaperDollInfoFrame\\SpellSchoolIcon"..i);
+		end
+	end
+	
+	GameTooltip:AddLine(self.tooltip2);
+	
+	if (self.bonusDamage and self.unit == "player") then
+		local petStr, damage;
+		if (self.bonusDamage[6] == self.minModifier and self.bonusDamage[3] == self.minModifier) then
+			petStr = PET_BONUS_TOOLTIP_WARLOCK_SPELLDMG;
+			damage = self.minModifier;
+		elseif( self.bonusDamage[6] > self.bonusDamage[3] ) then
+			petStr = PET_BONUS_TOOLTIP_WARLOCK_SPELLDMG_SHADOW;
+			damage = self.bonusDamage[6];
+		else
+			petStr = PET_BONUS_TOOLTIP_WARLOCK_SPELLDMG_FIRE;
+			damage = self.bonusDamage[3];
+		end
+		
+		local petBonusAP = MCF_ComputePetBonus("PET_BONUS_SPELLDMG_TO_AP", damage );
+		local petBonusDmg = MCF_ComputePetBonus("PET_BONUS_SPELLDMG_TO_SPELLDMG", damage );
+		if( petBonusAP > 0 or petBonusDmg > 0 ) then
+			GameTooltip:AddLine(format(petStr, petBonusAP, petBonusDmg), nil, nil, nil, 1 );
+		end
+	end
+	GameTooltip:Show();
+end
+
+function MCF_SpellHitChance_OnEnter(statFrame)
+
+	if (MOVING_STAT_CATEGORY) then return; end
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);--[[  + GetSpellHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+	if (hitChance >= 0) then
+		hitChance = format("+%.2F%%", hitChance);
+	else
+		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
+	GameTooltip:AddLine(format(STAT_HIT_SPELL_TOOLTIP, GetCombatRating(CR_HIT_SPELL), GetCombatRatingBonus(CR_HIT_SPELL)));
+	GameTooltip:AddLine(L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"]);
+	GameTooltip:AddLine(" ");
+	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local missChance = format("%.2F%%", MCF_GetSpellMissChance(i));
+		local level = playerLevel + i;
+			if (i == 3) then
+				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+			end
+		GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+		
+	GameTooltip:Show();
+end
+
+function MCF_CharacterSpellCritChance_OnEnter(self)
+	if (MOVING_STAT_CATEGORY) then return; end
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, SPELL_CRIT_CHANCE).." "..self.minCrit..FONT_COLOR_CODE_CLOSE);
+	local spellCrit;
+	for i=2, MAX_SPELL_SCHOOLS do
+		spellCrit = format("%.2F%%", self.spellCrit[i]);
+		if (spellCrit ~= self.minCrit) then
+			GameTooltip:AddDoubleLine(_G["DAMAGE_SCHOOL"..i], spellCrit, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+			GameTooltip:AddTexture("Interface\\PaperDollInfoFrame\\SpellSchoolIcon"..i);
+		end
+	end
+	GameTooltip:AddLine(format(L["MCF_CR_CRIT_SPELL_TOOLTIP"], GetCombatRating(CR_CRIT_SPELL), GetCombatRatingBonus(CR_CRIT_SPELL)));
+	GameTooltip:Show();
+end
+
+-- DEFENSE
+function MCF_Defense_OnEnter(statFrame)
+	if (MOVING_STAT_CATEGORY) then
+		return;
+	end
+
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+
+	local base, modifier = UnitDefense("player");
+	local defensePercent = GetDodgeBlockParryChanceFromDefense();
+	local CritHitTakenChance = GetCombatRatingBonus(CR_DEFENSE_SKILL);
+
+	local posBuff = 0;
+	local negBuff = 0;
+	if ( modifier > 0 ) then
+		posBuff = modifier;
+	elseif ( modifier < 0 ) then
+		negBuff = modifier;
+	end
+
+	if (CritHitTakenChance >= 0) then
+		CritHitTakenChance = format("+%.2F%%", CritHitTakenChance);
+	else
+		CritHitTakenChance = RED_FONT_COLOR_CODE..format("%.2F%%", CritHitTakenChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	
+	local _, defenseText = MCF_PaperDollFormatStat(DEFENSE, base, posBuff, negBuff, statFrame, text, true);
+
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..defenseText..FONT_COLOR_CODE_CLOSE);
+
+	GameTooltip:AddLine(format(DEFAULT_STATDEFENSE_TOOLTIP, GetCombatRating(CR_DEFENSE_SKILL), GetCombatRatingBonus(CR_DEFENSE_SKILL), defensePercent, defensePercent));
+	GameTooltip:AddLine(" ");
+
+	local _, class = UnitClass("player");
+	if ( class == "DRUID" ) then
+		local talentName, _, _, _, rank = GetTalentInfo(2, 18);
+		if (rank > 0) then
+			local icon = "Interface\\Icons\\Ability_Druid_Enrage";
+			local talentPercent = rank * 2;
+
+			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"], talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+			GameTooltip:AddTexture(icon);
+			GameTooltip:AddLine(" ");
+		end
+	end
+
+	GameTooltip:AddDoubleLine(L["MCF_STAT_ENEMY_LEVEL"], L["MCF_CRIT_HIT_TAKEN_CHANCE"], HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local critHitTakenChance = format("%.2F%%", MCF_GetCritHitTakenChance(i));
+		local level = playerLevel + i;
+			if (playerLevel == 80 and i == 3) then
+				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+			end
+		GameTooltip:AddDoubleLine("      "..level, critHitTakenChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+		
+	GameTooltip:Show();
+end
+
+
+
+-- UNUSED
+function MCF_CharacterAttackFrame_OnEnter(self)
+	if (MOVING_STAT_CATEGORY) then return; end
+	-- Main hand weapon
+	GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+	GameTooltip:SetText(INVTYPE_WEAPONMAINHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	GameTooltip:AddLine(self.weaponSkill);
+	GameTooltip:AddLine(self.weaponRating);
+	-- Check for offhand weapon
+	if ( self.offhandSkill ) then
+		GameTooltip:AddLine("\n");
+		GameTooltip:AddLine(INVTYPE_WEAPONOFFHAND, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+		GameTooltip:AddLine(self.offhandSkill);
+		GameTooltip:AddLine(self.offhandRating);
+	end
+	GameTooltip:Show();
+end
+
+-- Disabled completely because mastery doesn't exist in WotLK
+--[[ function MCF_Mastery_OnEnter(statFrame)
+	if (not MOVING_STAT_CATEGORY) then return; end
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+	
+	local _, class = UnitClass("player");
+	local mastery = GetMastery();
+	local masteryBonus = GetCombatRatingBonus(CR_MASTERY);
+	
+	local title = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_MASTERY).." "..format("%.2F", mastery)..FONT_COLOR_CODE_CLOSE;
+	if (masteryBonus > 0) then
+		title = title..HIGHLIGHT_FONT_COLOR_CODE.." ("..format("%.2F", mastery-masteryBonus)..FONT_COLOR_CODE_CLOSE..GREEN_FONT_COLOR_CODE.."+"..format("%.2F", masteryBonus)..FONT_COLOR_CODE_CLOSE..HIGHLIGHT_FONT_COLOR_CODE..")";
+	end
+	GameTooltip:SetText(title);
+	
+	local masteryKnown = IsSpellKnown(MCF_CLASS_MASTERY_SPELLS[class]);
+	local primaryTalentTree = GetPrimaryTalentTree();
+	if (masteryKnown and primaryTalentTree) then
+		local masterySpell, masterySpell2 = GetTalentTreeMasterySpells(primaryTalentTree);
+		if (masterySpell) then
+			GameTooltip:AddSpellByID(masterySpell);
+		end
+		if (masterySpell2) then
+			GameTooltip:AddLine(" ");
+			GameTooltip:AddSpellByID(masterySpell2);
+		end
+		GameTooltip:AddLine(" ");
+		GameTooltip:AddLine(format(STAT_MASTERY_TOOLTIP, GetCombatRating(CR_MASTERY), masteryBonus), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
+	else
+		GameTooltip:AddLine(format(STAT_MASTERY_TOOLTIP, GetCombatRating(CR_MASTERY), masteryBonus), NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true);
+		GameTooltip:AddLine(" ");
+		if (masteryKnown) then
+			GameTooltip:AddLine(STAT_MASTERY_TOOLTIP_NO_TALENT_SPEC, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, true);
+		else
+			GameTooltip:AddLine(STAT_MASTERY_TOOLTIP_NOT_KNOWN, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b, true);
+		end
+	end
+	GameTooltip:Show();
+end ]]
+
+-- TESTING
+--[[ function MCF_SpellHitCheckTalents()
+	local _, class = UnitClass("player");
+	if ( not MCF_TALENTS_FOR_SPELLHIT[class] ) then
+		return;
+	end
+
+	local result = {};
+	for tableIndex, talent in pairs(MCF_TALENTS_FOR_SPELLHIT[class]) do
+		local _, _, _, _, rank = GetTalentInfo(talent.tab, talent.index);
+		if (rank > 0 ) then
+			local id;
+			if ( not talent.all ) then
+				for i=1, #talent.schools do
+					if talent.schools[i] then
+						id = i-1;
+					end
+				end
+			end
+
+			local plusHit = rank * talent.increment;
+
+			result[tableIndex] = {all = talent.all, school = id, plusHit = plusHit};
+		end
+	end
+
+	return result;
+end
+
+function MCF_SpellHitChance_OnEnter(statFrame)
+
+	if (MOVING_STAT_CATEGORY) then return; end
+	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);
+
+	local hitFromTalents = MCF_SpellHitCheckTalents();
+	local schoolHitChance, school, additionalHit;
+	if ( hitFromTalents and (#hitFromTalents > 0) ) then
+		for i=1, #hitFromTalents do
+			if hitFromTalents[i].all then
+				hitChance = hitChance + hitFromTalents[i].plusHit;
+			else
+				school = hitFromTalents[i].school;
+				additionalHit = hitFromTalents[i].plusHit;
+			end
+		end
+	end
+	schoolHitChance = hitChance;
+
+	if (hitChance >= 0) then
+		hitChance = format("+%.2F%%", hitChance);
+	else
+		hitChance = RED_FONT_COLOR_CODE..format("%.2F%%", hitChance)..FONT_COLOR_CODE_CLOSE;
+	end
+	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
+
+	if ( school ) then
+		schoolHitChance = format("+%.2F%%", schoolHitChance + additionalHit);
+		GameTooltip:AddDoubleLine(_G["DAMAGE_SCHOOL"..school], schoolHitChance, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+		GameTooltip:AddTexture("Interface\\PaperDollInfoFrame\\SpellSchoolIcon"..school);
+	end
+
+	GameTooltip:AddLine(format(STAT_HIT_SPELL_TOOLTIP, GetCombatRating(CR_HIT_SPELL), GetCombatRatingBonus(CR_HIT_SPELL)));
+	GameTooltip:AddLine(" ");
+	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+	local playerLevel = UnitLevel("player");
+	for i=0, 3 do
+		local missChance = format("%.2F%%", MCF_GetSpellMissChance(i));
+		local level = playerLevel + i;
+			if (i == 3) then
+				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
+			end
+		GameTooltip:AddDoubleLine("      "..level, missChance.."    ", NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b);
+	end
+		
+	GameTooltip:Show();
 end ]]
