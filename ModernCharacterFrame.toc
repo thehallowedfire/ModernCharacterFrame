@@ -6,8 +6,8 @@
 ## SavedVariablesPerCharacter: MCF_SETTINGS
 
 Localization/enUS.lua
-Localization/ruRU.lua
 Localization/frFR.lua
+Localization/ruRU.lua
 
 DB.lua
 DBSettings.lua
