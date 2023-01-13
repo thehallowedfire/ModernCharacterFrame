@@ -21,6 +21,7 @@ setmetatable(L, {__index=defaultFunc});
 -- If locale file doesn't have some string, that differ from Cataclysm version, then you can contact me and I'll add it (it has to be added in other locales as well)
 
 -- OPTIONS FRAME
+-- Please  translate also "Re-skins default Character frame into modern version.", "Version:", "Author:" and your version of "<your language> translation:"
 L["MCF_OPTIONS_DESCRIPTION"] = "Re-skins default Character frame into modern version.\n\nVersion: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nAuthor: Профессия — Flamegor (EU).";
 -- Taco Tip integration
 L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "TacoTip's Gear Score";

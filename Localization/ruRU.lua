@@ -16,6 +16,7 @@ local _, L = ...;
 
 if (GetLocale() == "ruRU") then
     -- OPTIONS FRAME
+    -- Please  translate also "Re-skins default Character frame into modern version.", "Version:", "Author:" and your version of "<your language> translation:"
     L["MCF_OPTIONS_DESCRIPTION"] = "Придает современный вид стандартному окну персонажа.\n\nВерсия: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nАвтор: Профессия — Flamegor (EU).";
     -- Taco Tip integration
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "TacoTip's Gear Score";
