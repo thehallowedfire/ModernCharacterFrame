@@ -17,7 +17,7 @@ local addonName, L = ...;
 if (GetLocale() == "frFR") then
     -- OPTIONS FRAME
     -- Please  translate also "Re-skins default Character frame into modern version.", "Version:", "Author:" and your version of "<your language> translation:"
-    L["MCF_OPTIONS_DESCRIPTION"] = "Re-skins default Character frame into modern version.\n\nVersion: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nAuthor: Профессия — Flamegor (EU).\nFrench translation: Datyb — Auberdine (EU).";
+    L["MCF_OPTIONS_DESCRIPTION"] = "Transforme le cadre du personnage par défaut en une version moderne.\n\nVersion: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nAuteur: Профессия — Flamegor (EU).\nTraduction française: Datyb — Auberdine (EU).";
     -- Taco Tip integration
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "Score d'équipement de TacoTip";
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE_DISABLED"] = "Score d'équipement de TacoTip "..RED_FONT_COLOR_CODE.."(AddOn n'est pas chargé)"..FONT_COLOR_CODE_CLOSE;
@@ -53,7 +53,7 @@ if (GetLocale() == "frFR") then
     L["MCF_STAT_DPS_SHORT"] = "Dégâts par seconde";
     L["MCF_WEAPON_SPEED"] = "Vitesse d'attaque";
     L["MCF_STAT_HASTE"] = "Hâte";
-    L["MCF_STAT_ARMOR_PENETRATION"] = "Pénétration de l'armure";
+    L["MCF_STAT_ARMOR_PENETRATION"] = "Pénétration d'armure";
     -- Spells
     L["MCF_SPELL_PENETRATION"] = "Pénétration des sorts";
     L["MCF_MANA_REGEN"] = "Régénération de mana";
@@ -81,8 +81,8 @@ if (GetLocale() == "frFR") then
     L["MCF_CR_CRIT_RANGED_TOOLTIP"] = "Chance des attaques infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";
     -- Spells
     L["MCF_SPELL_PENETRATION_TOOLTIP"] = "Pénétration des sorts %d (Réduit la résistance adverse de %d)";
-    L["MCF_MANA_REGEN_TOOLTIP"] = "%d mana régénéré toutes les 5 secondes hors combat.";
-    L["MCF_CR_CRIT_SPELL_TOOLTIP"] = "Chance des sorts infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";
+    L["MCF_MANA_REGEN_TOOLTIP"] = "%d points de mana régénérés toutes les 5 secondes hors combat.";
+    L["MCF_CR_CRIT_SPELL_TOOLTIP"] = "Chance que les sorts infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";
     -- Defense
     L["MCF_CR_BLOCK_TOOLTIP"] = "Le score de blocage %d augmente la probabilité de bloquer les attaques de %.2f%%.\nUn blocage réussi arrête %d points de dégâts.";
     -- Defense - Custom addition
