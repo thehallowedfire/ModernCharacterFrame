@@ -81,10 +81,13 @@ L["MCF_CR_EXPERTISE_TOOLTIP"] = CR_EXPERTISE_TOOLTIP; -- "Reduces chance to be d
 L["MCF_CR_ARMOR_PENETRATION_TOOLTIP"] = "Reduces enemy armor (only for your attacks).\nArmor Penetration Rating: %d (enemy armor reduced for %.2f%%).";
 -- Melee
 L["MCF_STAT_TOOLTIP_BONUS_AP"] = "Increases Attack Power by %d.\n";
+L["MCF_STAT_HIT_MELEE_TOOLTIP"] = "Hit rating %d (+%.2f%% hit chance)";
 L["MCF_CR_CRIT_MELEE_TOOLTIP"] = "Chance of attacks doing extra damage.\nCrit rating %d (+%.2f%% crit chance)";
 -- Ranged
+L["MCF_STAT_HIT_RANGED_TOOLTIP"] = "Hit rating %d (+%.2f%% hit chance)";
 L["MCF_CR_CRIT_RANGED_TOOLTIP"] = "Chance of attacks doing extra damage.\nCrit rating %d (+%.2f%% crit chance)";
 -- Spells
+L["MCF_STAT_HIT_SPELL_TOOLTIP"] = "Hit rating %d (+%.2f%% hit chance)";
 L["MCF_SPELL_PENETRATION_TOOLTIP"] = SPELL_PENETRATION_TOOLTIP; -- "Spell Penetration %d (Reduces enemy resistances by %d)"
 L["MCF_MANA_REGEN_TOOLTIP"] = "%d mana regenerated every 5 seconds while not in combat.";
 L["MCF_CR_CRIT_SPELL_TOOLTIP"] = "Chance of spells doing extra damage.\nCrit rating %d (+%.2f%% crit chance)";
@@ -92,7 +95,7 @@ L["MCF_CR_CRIT_SPELL_TOOLTIP"] = "Chance of spells doing extra damage.\nCrit rat
 L["MCF_CR_BLOCK_TOOLTIP"] = CR_BLOCK_TOOLTIP; -- "Your block stops %d%% of incoming damage."
 -- Defense - Custom addition
 L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"] = "|cff888888(Excluding talent effects)|r";
-L["MCF_TALENT_EFFECTS_ACTIVE"] = "Talent effects active:";
+L["MCF_TALENT_EFFECTS_ACTIVE"] = "Talents effects active:";
 L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"] = "Chance to be critically hit redused by %d%%";
 L["MCF_STAT_ENEMY_LEVEL"] = "Enemy Level";
 L["MCF_CRIT_HIT_TAKEN_CHANCE"] = "Chance to be critically hit";
@@ -101,3 +104,9 @@ L["MCF_RESISTANCE_TOOLTIP_SUBTEXT"] = "Reduces %s damage taken by an average of 
 
 -- EQUIPMENT MANAGER
 L["MCF_EQUIPMENT_SETS_NAME_RESERVED"] = "This name is restricted for use.";
+
+-- HIT TOOLTIP CUSTOM ADDITION
+L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"] = "Talents and abilities effects active:";
+L["MCF_TALENT_NOT_TAKEN_INTO_ACCOUNT"] = "|cff888888Not taken into account|r";
+-- Try to make the text authentic but as short as possible (authenticity is priority, though).
+L["MCF_TALENT_DESC_BASE"] = "Hit Chance increased by %d%%";

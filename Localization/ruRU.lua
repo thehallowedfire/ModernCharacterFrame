@@ -76,10 +76,13 @@ if (GetLocale() == "ruRU") then
     L["MCF_CR_ARMOR_PENETRATION_TOOLTIP"] = "Снижение брони противника (только для ваших атак).\nРейтинг: %d (броня противника уменьшена на %.2f%%).";
     -- Melee
     L["MCF_STAT_TOOLTIP_BONUS_AP"] = "Увеличивает силу атаки на %d.\n";
+    L["MCF_STAT_HIT_MELEE_TOOLTIP"] = "Рейтинг меткости: %d (вероятность попадания атакой по цели +%.2f%%)";
     L["MCF_CR_CRIT_MELEE_TOOLTIP"] = "Вероятность нанести дополнительный урон.\nРейтинг: %d (вероятность нанести критический удар +%.2f%%).";
     -- Ranged
+    L["MCF_STAT_HIT_RANGED_TOOLTIP"] = "Рейтинг меткости: %d (вероятность попадания атакой по цели +%.2f%%)";
     L["MCF_CR_CRIT_RANGED_TOOLTIP"] = "Вероятность нанести дополнительный урон в дальнем бою.\nРейтинг: %d (вероятность нанести критический удар +%.2f%%).";
     -- Spells
+    L["MCF_STAT_HIT_SPELL_TOOLTIP"] = "Рейтинг меткости: %d (вероятность попадания атакой по цели +%.2f%%)";
     L["MCF_SPELL_PENETRATION_TOOLTIP"] = "Проникающая способность заклинаний: %d (снижение сопротивления противника всем видам магии на %d)";
     L["MCF_MANA_REGEN_TOOLTIP"] = "%d ед. маны восполняется раз в 5 секунд, если вы не участвуете в бою.";
     L["MCF_CR_CRIT_SPELL_TOOLTIP"] = "Вероятность нанести дополнительный урон заклинанием.\nРейтинг: %d (вероятность нанести критический удар заклинанием +%.2f%%).";
@@ -96,4 +99,10 @@ if (GetLocale() == "ruRU") then
   
     -- EQUIPMENT MANAGER
     L["MCF_EQUIPMENT_SETS_NAME_RESERVED"] = "Это название комплекта экипировки ограничено для использования.";
+
+    -- HIT TOOLTIP CUSTOM ADDITION
+    L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"] = "Действуют эффекты талантов и способностей:";
+    L["MCF_TALENT_NOT_TAKEN_INTO_ACCOUNT"] = "|cff888888Не учитывается при подсчете|r";
+    -- Try to make the text authentic but as short as possible (authenticity is priority, though).
+    L["MCF_TALENT_DESC_BASE"] = "Меткость увеличена на %d%%";
 end

@@ -76,10 +76,16 @@ if (GetLocale() == "frFR") then
     L["MCF_CR_ARMOR_PENETRATION_TOOLTIP"] = "Réduit l'armure de l'ennemi (uniquement pour vos attaques).\nScore de pénétration d'armure : %d (armure de ennemi réduite de %.2f%%).";
     -- Melee
     L["MCF_STAT_TOOLTIP_BONUS_AP"] = "Augmente la puissance d'attaque de %d.\n"
+    -- NEW Need to translate melee hit tooltip (replace global string with custom string). Then you can delete this comment
+    L["MCF_STAT_HIT_MELEE_TOOLTIP"] = STAT_HIT_MELEE_TOOLTIP; -- "Hit rating %d (+%.2f%% hit chance)";
     L["MCF_CR_CRIT_MELEE_TOOLTIP"] = "Chance des attaques infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";
     -- Ranged
+    -- NEW Need to translate ranged hit tooltip (replace global string with custom string). Then you can delete this comment
+    L["MCF_STAT_HIT_RANGED_TOOLTIP"] = STAT_HIT_RANGED_TOOLTIP; -- "Hit rating %d (+%.2f%% hit chance)";
     L["MCF_CR_CRIT_RANGED_TOOLTIP"] = "Chance des attaques infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";
     -- Spells
+    -- NEW Need to translate spell hit tooltip (replace global string with custom string). Then you can delete this comment
+    L["MCF_STAT_HIT_SPELL_TOOLTIP"] = STAT_HIT_SPELL_TOOLTIP; -- "Hit rating %d (+%.2f%% hit chance)";
     L["MCF_SPELL_PENETRATION_TOOLTIP"] = "Pénétration des sorts %d (Réduit la résistance adverse de %d)";
     L["MCF_MANA_REGEN_TOOLTIP"] = "%d points de mana régénérés toutes les 5 secondes hors combat.";
     L["MCF_CR_CRIT_SPELL_TOOLTIP"] = "Chance que les sorts infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";
@@ -87,7 +93,7 @@ if (GetLocale() == "frFR") then
     L["MCF_CR_BLOCK_TOOLTIP"] = "Le score de blocage %d augmente la probabilité de bloquer les attaques de %.2f%%.\nUn blocage réussi arrête %d points de dégâts.";
     -- Defense - Custom addition
     L["MCF_SPELLHIT_NOTALENTS_TOOLTIP"] = "|cff888888(Excluant les effets de talents)|r";
-    L["MCF_TALENT_EFFECTS_ACTIVE"] = "Effet de talent actif:";
+    L["MCF_TALENT_EFFECTS_ACTIVE"] = "Effet de talents actif:";
     L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"] = "Chance d'être touché réduit de %d%%";
     L["MCF_STAT_ENEMY_LEVEL"] = "Niveau de l'ennemi";
     L["MCF_CRIT_HIT_TAKEN_CHANCE"] = "Chance d'être touché critique";
@@ -96,4 +102,11 @@ if (GetLocale() == "frFR") then
     
     -- EQUIPMENT MANAGER
     L["MCF_EQUIPMENT_SETS_NAME_RESERVED"] = "Ce nom est réservé.";
+
+    -- NEW
+    -- HIT TOOLTIP CUSTOM ADDITION
+    L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"] = "Talents and abilities effects active:";
+    L["MCF_TALENT_NOT_TAKEN_INTO_ACCOUNT"] = "|cff888888Not taken into account|r";
+    -- Try to make the text authentic but as short as possible (authenticity is priority, though).
+    L["MCF_TALENT_DESC_BASE"] = "Hit Chance increased by %d%%";
 end
