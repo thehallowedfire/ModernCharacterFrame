@@ -863,7 +863,7 @@
 		</Layers>
 		<Scripts>
 			<OnEnter>
-				PaperDollStatTooltip(self);
+				MCF_PaperDollStatTooltip(self);
 			</OnEnter>
 			<OnLeave>
 				GameTooltip:Hide();
