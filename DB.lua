@@ -1,4 +1,5 @@
--- MCF_CHARACTERFRAME_SUBFRAMES = { "MCFPaperDollFrame", "MCFPetPaperDollFrame", "MCFReputationFrame", "MCFTokenFrame" };
+local addonName, L = ...;
+
 MCF_CHARACTERFRAME_EXPANDED_WIDTH = 540;
 
 MCF_PAPERDOLL_SIDEBARS = {
@@ -353,11 +354,38 @@ MCF_BASE_CRIT_HIT_TAKEN_CHANCE = {
 	[3] = 5.6;
 };
 
--- Unused for now, keep in case decide to improve SpellHit tooltip
 MCF_TALENTS_FOR_SPELLHIT = {
-	["MAGE"] = {
-		-- Arcane Focus
+	["DEATHKNIGHT"] = {
+		-- Virulence
 		[1] = {
+			tab = 3,
+			index = 1,
+			increment = 1,
+			all = true,
+			icon = "Interface\\Icons\\spell_shadow_burningspirit",
+		},
+	},
+	["DRUID"] = {
+		-- Balance of Power
+		[1] = {
+			tab = 1,
+			index = 13,
+			increment = 2,
+			all = true,
+			icon = "Interface\\Icons\\ability_druid_balanceofpower",
+		},
+	},
+	["MAGE"] = {
+		-- Precision
+		[1] = {
+			tab = 3,
+			index = 17,
+			increment = 1,
+			all = true,
+			icon = "Interface\\Icons\\spell_ice_magicdamage",
+		},
+		-- Arcane Focus
+		[2] = {
 			tab = 1,
 			index = 3,
 			increment = 1,
@@ -370,15 +398,73 @@ MCF_TALENTS_FOR_SPELLHIT = {
 				false, -- Nature
 				false, -- Frost
 				false, -- Shadow
-				true,   -- Arcane
-			}
+				true,  -- Arcane
+			},
+			icon = "Interface\\Icons\\spell_holy_devotion",
 		},
-		-- Precision
-		[2] = {
+	},
+	["PALADIN"] = {
+		-- Enlightened Judgements
+		[1] = {
+			tab = 1,
+			index = 22,
+			increment = 2,
+			all = true,
+			icon = "Interface\\Icons\\ability_paladin_enlightenedjudgements",
+		},
+	},
+	["PRIEST"] = {
+		-- Shadow Focus
+		[1] = {
 			tab = 3,
-			index = 17,
+			index = 3,
+			increment = 1,
+			all = false,
+			schools = {
+				nil,
+				nil,
+				false, -- Holy (id 2)
+				false, -- Fire
+				false, -- Nature
+				false, -- Frost
+				true,  -- Shadow
+				false, -- Arcane
+			},
+			icon = "Interface\\Icons\\spell_shadow_burningspirit",
+		},
+	},
+	["SHAMAN"] = {
+		-- Heroic Presence HACK
+		--[[ [1] = {
+			icon = "Interface\\Icons\\inv_helmet_21",
+		}, ]]
+		-- Elemental Precision
+		[1] = {
+			tab = 1,
+			index = 16,
+			increment = 1,
+			all = false,
+			schools = {
+				nil,
+				nil,
+				false, -- Holy (id 2)
+				true,  -- Fire
+				true,  -- Nature
+				true,  -- Frost
+				false, -- Shadow
+				false, -- Arcane
+			},
+			icon = "Interface\\Icons\\spell_nature_elementalprecision_1",
+		},
+	},
+	["WARLOCK"] = {
+		-- Suppression
+		[1] = {
+			tab = 1,
+			index = 5,
 			increment = 1,
 			all = true,
+			icon = "Interface\\Icons\\spell_shadow_unsummonbuilding",
 		},
 	},
 };
