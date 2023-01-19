@@ -13,7 +13,7 @@
 
 #### Currently supported localizations
 - English
-- French
+- French (made by [Alban Stelzlé])
 - Russian
 
 If you want to contribute and translate the addon for your language feel free to create a branch and make pull request (or you can just send me your .lua file via DM).
@@ -22,3 +22,5 @@ Latest release is always available here on GitHub or on [CurseForge].
 
 [TacoTip]: <https://www.curseforge.com/wow/addons/tacotip-gearscore-talents>
 [CurseForge]: <https://www.curseforge.com/wow/addons/modern-character-frame>
+
+[Alban Stelzlé]: <https://github.com/AlbanStelzle>
