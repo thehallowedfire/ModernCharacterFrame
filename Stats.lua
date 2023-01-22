@@ -1258,14 +1258,15 @@ function MCF_PaperDollFrame_SetMeleeHitChance(statFrame, unit)
 		statFrame:Hide();
 		return;
 	end
-	
+	local _, class = UnitClass("player");
+	local _, race = UnitRace("player");
+
 	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
 	local text = _G[statFrame:GetName().."StatText"];
 	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
 
-	-- Check for Alliance Shamans racial ability
-	local _, class = UnitClass("player");
-	if (class == "SHAMAN" and UnitFactionGroup("player") == "Alliance") then
+	-- Check for Draenei racial ability
+	if (race == "Draenei") then
 		hitChance = hitChance + 1;
 	end
 	
@@ -1612,13 +1613,14 @@ function MCF_PaperDollFrame_SetRangedHitChance(statFrame, unit)
 		statFrame:Hide();
 		return;
 	end
-	
+	local _, class = UnitClass("player");
+	local _, race = UnitRace("player");
+
 	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
 	local text = _G[statFrame:GetName().."StatText"];
 	local hitChance = GetCombatRatingBonus(CR_HIT_RANGED);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
 
-	local _, class = UnitClass("player");
-	if (class == "SHAMAN" and UnitFactionGroup("player") == "Alliance") then
+	if (race == "Draenei") then
 		hitChance = hitChance + 1;
 	end
 
@@ -1752,13 +1754,14 @@ function MCF_PaperDollFrame_SetSpellHitChance(statFrame, unit)
 		statFrame:Hide();
 		return;
 	end
+	local _, class = UnitClass("player");
+	local _, race = UnitRace("player");
 	
 	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
 	local text = _G[statFrame:GetName().."StatText"];
 	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);--[[  + GetSpellHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
 
-	local _, class = UnitClass("player");
-	if (class == "SHAMAN" and UnitFactionGroup("player") == "Alliance") then
+	if (race == "Draenei") then
 		hitChance = hitChance + 1;
 	end
 
@@ -2228,11 +2231,11 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 
 	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
 	local _, class = UnitClass("player");
-	local faction = UnitFactionGroup("player");
+	local _, race = UnitRace("player");
 	local hitFromTalents = MCF_CheckHitTalents(class, "melee");
 
 	local special = 0;
-	if (class == "SHAMAN" and faction == "Alliance") then
+	if (race == "Draenei") then
 		special = 1;
 	end
 
@@ -2270,9 +2273,9 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
 	GameTooltip:AddLine(format(L["MCF_STAT_HIT_MELEE_TOOLTIP"], GetCombatRating(CR_HIT_MELEE), GetCombatRatingBonus(CR_HIT_MELEE)));
 
-	if (class == "SHAMAN" and faction == "Alliance") then
+	if (race == "Draenei") then
 		GameTooltip:AddLine(" ");
-		GameTooltip:AddLine(L["MCF_TALENT_AND_PASSIVE_ABILITY_EFFECTS_ACTIVE"]);
+		GameTooltip:AddLine(L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"]);
 		GameTooltip:AddDoubleLine(GetSpellInfo(6562), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], 1)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 		GameTooltip:AddTexture("Interface\\Icons\\inv_helmet_21");
 	end
@@ -2285,7 +2288,7 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 	end
 
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
-		if (class ~= "SHAMAN") then
+		if (race ~= "Draenei") then
 			GameTooltip:AddLine(" ");
 			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
 		end
@@ -2422,11 +2425,12 @@ function MCF_RangedHitChance_OnEnter(statFrame)
 
 	local hitChance = GetCombatRatingBonus(CR_HIT_RANGED);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
 	local _, class = UnitClass("player");
+	local _, race = UnitRace("player");
 	local faction = UnitFactionGroup("player");
 	local hitFromTalents = MCF_CheckHitTalents(class, "ranged");
 
 	local special = 0;
-	if (class == "SHAMAN" and faction == "Alliance") then
+	if (race == "Draenei") then
 		special = 1;
 	end
 
@@ -2445,15 +2449,15 @@ function MCF_RangedHitChance_OnEnter(statFrame)
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
 	GameTooltip:AddLine(format(L["MCF_STAT_HIT_RANGED_TOOLTIP"], GetCombatRating(CR_HIT_RANGED), GetCombatRatingBonus(CR_HIT_RANGED)));
 
-	if (class == "SHAMAN" and faction == "Alliance") then
+	if (race == "Draenei") then
 		GameTooltip:AddLine(" ");
-		GameTooltip:AddLine(L["MCF_TALENT_AND_PASSIVE_ABILITY_EFFECTS_ACTIVE"]);
+		GameTooltip:AddLine(L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"]);
 		GameTooltip:AddDoubleLine(GetSpellInfo(6562), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], 1)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 		GameTooltip:AddTexture("Interface\\Icons\\inv_helmet_21");
 	end
 
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
-		if (class ~= "SHAMAN") then
+		if (race ~= "Draenei") then
 			GameTooltip:AddLine(" ");
 			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
 		end
@@ -2535,12 +2539,12 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 
 	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);
 	local _, class = UnitClass("player");
-	local faction = UnitFactionGroup("player");
+	local _, race = UnitRace("player");
 	local hitFromTalents = MCF_CheckHitTalents(class, "spells");
 	local schools;
 
 	local special = 0;
-	if (class == "SHAMAN" and faction == "Alliance") then
+	if (race == "Draenei") then
 		special = 1;
 	end
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
@@ -2564,18 +2568,17 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 	GameTooltip:AddLine(format(L["MCF_STAT_HIT_SPELL_TOOLTIP"], GetCombatRating(CR_HIT_SPELL), GetCombatRatingBonus(CR_HIT_SPELL)));
 
 	local line = 3;
-	-- If unit is Alliance Shaman then use another "talents active" string and add racial Heroic Presence buff (+1% hit)
-	if (class == "SHAMAN" and faction == "Alliance") then
+	-- If unit is Draenei then use another "talents active" string and add racial Heroic Presence buff (+1% hit)
+	if (race == "Draenei") then
 		GameTooltip:AddLine(" ");
-		GameTooltip:AddLine(L["MCF_TALENT_AND_PASSIVE_ABILITY_EFFECTS_ACTIVE"]);
+		GameTooltip:AddLine(L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"]);
 		GameTooltip:AddDoubleLine(GetSpellInfo(6562), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], 1)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 		GameTooltip:AddTexture("Interface\\Icons\\inv_helmet_21");
 		line = line + 2;
 	end
 
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
-		-- If unit is not Alliance Shaman (otherwise line would be 5)
-		if (line == 3) then
+		if (race ~= "Draenei") then
 			GameTooltip:AddLine(" ");
 			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
 			line = line + 1;
