@@ -2281,8 +2281,10 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 	end
 
 	if (dk_cold_steel) then
-		GameTooltip:AddLine(" ");
-		GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+		if (race ~= "Draenei") then
+			GameTooltip:AddLine(" ");
+			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+		end
 		GameTooltip:AddDoubleLine(GetTalentInfo(2, 16), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], dk_cold_steel)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 		GameTooltip:AddTexture("Interface\\Icons\\ability_dualwield");
 	end
