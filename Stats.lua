@@ -529,37 +529,52 @@ end
 
 -- Check if player has specific talents. Returns dict
 -- /run for i=1, GetNumTalents(1) do local name = GetTalentInfo(1, i); print(i, name); end
-function MCF_SpellHitCheckTalents()
-	local _, class = UnitClass("player");
-	if ( not MCF_TALENTS_FOR_SPELLHIT[class] ) then
+function MCF_CheckHitTalents(class, hit_type)
+	if ( not MCF_TALENTS_FOR_HIT[class] ) then
 		return;
 	end
 
 	local result = {};
-	for tableIndex, talent in pairs(MCF_TALENTS_FOR_SPELLHIT[class]) do
-		local _, _, _, _, rank = GetTalentInfo(talent.tab, talent.index);
-		if (rank > 0) then
-			local schools = {};
-			if ( not talent.all ) then
-				for i=3, #talent.schools do
-					if talent.schools[i] then
-						table.insert(schools, i-1);
-					end
+	for tableIndex, talent in pairs(MCF_TALENTS_FOR_HIT[class]) do
+		local requiredHitType = false;
+		if (talent.hit_types == "all") then
+			requiredHitType = true;
+		else
+			for _, v in pairs(talent.hit_types) do
+				if (v == hit_type) then
+					requiredHitType = true;
 				end
-			else
-				schools = nil;
 			end
+		end
 
-			local plusHit = rank * talent.increment;
-			table.insert(result, {all = talent.all,
-									schools = schools,
-									plusHit = plusHit,
-									tab = talent.tab,
-									index = talent.index,
-									icon = talent.icon});
+		if (requiredHitType) then
+			local _, _, _, _, rank = GetTalentInfo(talent.tab, talent.index);
+			if (rank > 0) then
+				local schools = {};
+				if ( not talent.all_schools ) then
+					for i=3, #talent.schools do
+						if talent.schools[i] then
+							table.insert(schools, i-1);
+						end
+					end
+				else
+					schools = nil;
+				end
+
+				local plusHit = rank * talent.increment;
+				table.insert(result, {all_schools = talent.all_schools,
+									  schools = schools,
+									  plusHit = plusHit,
+									  tab = talent.tab,
+									  index = talent.index,
+									  icon = talent.icon});
+			end
 		end
 	end
-	return result;
+
+	if (#result ~= 0) then
+		return result
+	end
 end
 
 ----------------------------------------------------------------------------------
@@ -605,12 +620,12 @@ end
 ----------------------------------------------------------------------------------
 ------------------------------- GET STAT FUNCTIONS -------------------------------
 ----------------------------------------------------------------------------------
-function MCF_GetMeleeMissChance(levelOffset, special)
+function MCF_GetMeleeMissChance(levelOffset, talentHit, special)
 	if (levelOffset < 0 or levelOffset > 3) then
 		return 0;
 	end
 	local chance = MCF_BASE_MISS_CHANCE_PHYSICAL[levelOffset];
-	chance = chance - GetCombatRatingBonus(CR_HIT_MELEE);--[[  - GetHitModifier(); ]] --MCFFIX this function gives another result
+	chance = chance - GetCombatRatingBonus(CR_HIT_MELEE) - talentHit;--[[  - GetHitModifier(); ]] --MCFFIX this function gives another result
 	if (IsDualWielding() and not special) then
 		chance = chance + MCF_DUAL_WIELD_HIT_PENALTY;
 	end
@@ -622,12 +637,12 @@ function MCF_GetMeleeMissChance(levelOffset, special)
 	return chance;
 end
 
-function MCF_GetRangedMissChance(levelOffset, special)
+function MCF_GetRangedMissChance(levelOffset, talentHit, special)
 	if (levelOffset < 0 or levelOffset > 3) then
 		return 0;
 	end
 	local chance = MCF_BASE_MISS_CHANCE_PHYSICAL[levelOffset];
-	chance = chance - GetCombatRatingBonus(CR_HIT_RANGED);--[[  - GetHitModifier(); ]] --MCFFIX this function gives another result
+	chance = chance - GetCombatRatingBonus(CR_HIT_RANGED) - talentHit;--[[  - GetHitModifier(); ]] --MCFFIX this function gives another result
 	if (chance < 0) then
 		chance = 0;
 	elseif (chance > 100) then
@@ -636,12 +651,12 @@ function MCF_GetRangedMissChance(levelOffset, special)
 	return chance;
 end
 
-function MCF_GetSpellMissChance(levelOffset, special)
+function MCF_GetSpellMissChance(levelOffset, talentHit, special)
 	if (levelOffset < 0 or levelOffset > 3) then
 		return 0;
 	end
 	local chance = MCF_BASE_MISS_CHANCE_SPELL[levelOffset];
-	chance = chance - GetCombatRatingBonus(CR_HIT_SPELL) - special;--[[  - GetSpellHitModifier(); ]] --MCFFIX this function gives another result
+	chance = chance - GetCombatRatingBonus(CR_HIT_SPELL) - talentHit;--[[  - GetSpellHitModifier(); ]] --MCFFIX this function gives another result
 	if (chance < 0) then
 		chance = 0;
 	elseif (chance > 100) then
@@ -1244,6 +1259,19 @@ function MCF_PaperDollFrame_SetMeleeHitChance(statFrame, unit)
 	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
 	local text = _G[statFrame:GetName().."StatText"];
 	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+
+	local _, class = UnitClass("player");
+	if (class == "SHAMAN" and UnitFactionGroup("player") == "Alliance") then
+		hitChance = hitChance + 1;
+	end
+
+	local hitFromTalents = MCF_CheckHitTalents(class, "melee");
+	if (hitFromTalents and #hitFromTalents > 0) then
+		for i=1, #hitFromTalents do
+			hitChance = hitChance + hitFromTalents[i].plusHit;
+		end
+	end
+
 	if (hitChance >= 0) then
 		hitChance = format("+%.2F%%", hitChance);
 	else
@@ -1567,6 +1595,19 @@ function MCF_PaperDollFrame_SetRangedHitChance(statFrame, unit)
 	_G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, STAT_HIT_CHANCE));
 	local text = _G[statFrame:GetName().."StatText"];
 	local hitChance = GetCombatRatingBonus(CR_HIT_RANGED);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+
+	local _, class = UnitClass("player");
+	if (class == "SHAMAN" and UnitFactionGroup("player") == "Alliance") then
+		hitChance = hitChance + 1;
+	end
+
+	local hitFromTalents = MCF_CheckHitTalents(class, "ranged");
+	if (hitFromTalents and #hitFromTalents > 0) then
+		for i=1, #hitFromTalents do
+			hitChance = hitChance + hitFromTalents[i].plusHit;
+		end
+	end
+
 	if (hitChance >= 0) then
 		hitChance = format("+%.2F%%", hitChance);
 	else
@@ -1700,10 +1741,10 @@ function MCF_PaperDollFrame_SetSpellHitChance(statFrame, unit)
 		hitChance = hitChance + 1;
 	end
 
-	local hitFromTalents = MCF_SpellHitCheckTalents();
+	local hitFromTalents = MCF_CheckHitTalents(class, "spells");
 	if (hitFromTalents and #hitFromTalents > 0) then
 		for i=1, #hitFromTalents do
-			if hitFromTalents[i].all then
+			if hitFromTalents[i].all_schools then
 				hitChance = hitChance + hitFromTalents[i].plusHit;
 			end
 		end
@@ -2158,10 +2199,29 @@ function MCF_CharacterDamageFrame_OnEnter(self)
 end
 
 function MCF_MeleeHitChance_OnEnter(statFrame)
+	if (MOVING_STAT_CATEGORY) then
+		return;
+	end
 
-	if (MOVING_STAT_CATEGORY) then return; end
 	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+
 	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+	local _, class = UnitClass("player");
+	local faction = UnitFactionGroup("player");
+	local hitFromTalents = MCF_CheckHitTalents(class, "melee");
+
+	local special = 0;
+	if (class == "SHAMAN" and faction == "Alliance") then
+		special = 1;
+	end
+
+	if ( hitFromTalents and (#hitFromTalents > 0) ) then
+		for i=1, #hitFromTalents do
+			special = special + hitFromTalents[i].plusHit;
+		end
+	end
+
+	hitChance = hitChance + special;
 	if (hitChance >= 0) then
 		hitChance = format("+%.2F%%", hitChance);
 	else
@@ -2170,13 +2230,37 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
 	GameTooltip:AddLine(format(L["MCF_STAT_HIT_MELEE_TOOLTIP"], GetCombatRating(CR_HIT_MELEE), GetCombatRatingBonus(CR_HIT_MELEE)));
 	GameTooltip:AddLine(" ");
+
+	if (class == "SHAMAN" and faction == "Alliance") then
+		GameTooltip:AddLine(L["MCF_TALENT_AND_PASSIVE_ABILITY_EFFECTS_ACTIVE"]);
+		GameTooltip:AddDoubleLine(GetSpellInfo(6562), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], 1)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+		GameTooltip:AddTexture("Interface\\Icons\\inv_helmet_21");
+	end
+
+	if ( hitFromTalents and (#hitFromTalents > 0) ) then
+		if (class ~= "SHAMAN") then
+			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+		end
+
+		for i=1, #hitFromTalents do
+			local talentName, _, _, _, _ = GetTalentInfo(hitFromTalents[i].tab, hitFromTalents[i].index);
+			local icon = hitFromTalents[i].icon;
+			local description = L["MCF_TALENT_DESC_BASE"];
+			local talentPercent = hitFromTalents[i].plusHit;
+
+			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(description, talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+			GameTooltip:AddTexture(icon);
+		end
+		GameTooltip:AddLine(" ");
+	end
+
 	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 	if (IsDualWielding()) then
 		GameTooltip:AddLine(STAT_HIT_NORMAL_ATTACKS, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
 	end
 	local playerLevel = UnitLevel("player");
 	for i=0, 3 do
-		local missChance = format("%.2F%%", MCF_GetMeleeMissChance(i, false));
+		local missChance = format("%.2F%%", MCF_GetMeleeMissChance(i, special, false));
 		local level = playerLevel + i;
 			if (i == 3) then
 				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
@@ -2187,7 +2271,7 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 	if (IsDualWielding()) then
 		GameTooltip:AddLine(STAT_HIT_SPECIAL_ATTACKS, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
 		for i=0, 3 do
-			local missChance = format("%.2F%%", MCF_GetMeleeMissChance(i, true));
+			local missChance = format("%.2F%%", MCF_GetMeleeMissChance(i, special, true));
 			local level = playerLevel + i;
 			if (i == 3) then
 				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
@@ -2282,10 +2366,29 @@ function MCF_CharacterRangedDamageFrame_OnEnter(self)
 end
 
 function MCF_RangedHitChance_OnEnter(statFrame)
+	if (MOVING_STAT_CATEGORY) then
+		return;
+	end
 
-	if (MOVING_STAT_CATEGORY) then return; end
 	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
+
 	local hitChance = GetCombatRatingBonus(CR_HIT_RANGED);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
+	local _, class = UnitClass("player");
+	local faction = UnitFactionGroup("player");
+	local hitFromTalents = MCF_CheckHitTalents(class, "ranged");
+
+	local special = 0;
+	if (class == "SHAMAN" and faction == "Alliance") then
+		special = 1;
+	end
+
+	if ( hitFromTalents and (#hitFromTalents > 0) ) then
+		for i=1, #hitFromTalents do
+			special = special + hitFromTalents[i].plusHit;
+		end
+	end
+
+	hitChance = hitChance + special;
 	if (hitChance >= 0) then
 		hitChance = format("+%.2F%%", hitChance);
 	else
@@ -2294,10 +2397,34 @@ function MCF_RangedHitChance_OnEnter(statFrame)
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
 	GameTooltip:AddLine(format(L["MCF_STAT_HIT_RANGED_TOOLTIP"], GetCombatRating(CR_HIT_RANGED), GetCombatRatingBonus(CR_HIT_RANGED)));
 	GameTooltip:AddLine(" ");
+
+	if (class == "SHAMAN" and faction == "Alliance") then
+		GameTooltip:AddLine(L["MCF_TALENT_AND_PASSIVE_ABILITY_EFFECTS_ACTIVE"]);
+		GameTooltip:AddDoubleLine(GetSpellInfo(6562), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], 1)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+		GameTooltip:AddTexture("Interface\\Icons\\inv_helmet_21");
+	end
+
+	if ( hitFromTalents and (#hitFromTalents > 0) ) then
+		if (class ~= "SHAMAN") then
+			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+		end
+
+		for i=1, #hitFromTalents do
+			local talentName, _, _, _, _ = GetTalentInfo(hitFromTalents[i].tab, hitFromTalents[i].index);
+			local icon = hitFromTalents[i].icon;
+			local description = L["MCF_TALENT_DESC_BASE"];
+			local talentPercent = hitFromTalents[i].plusHit;
+
+			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(description, talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+			GameTooltip:AddTexture(icon);
+		end
+		GameTooltip:AddLine(" ");
+	end
+
 	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 	local playerLevel = UnitLevel("player");
 	for i=0, 3 do
-		local missChance = format("%.2F%%", MCF_GetRangedMissChance(i));
+		local missChance = format("%.2F%%", MCF_GetRangedMissChance(i, special));
 		local level = playerLevel + i;
 			if (i == 3) then
 				level = level.." / |TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:0|t";
@@ -2360,7 +2487,7 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 	local hitChance = GetCombatRatingBonus(CR_HIT_SPELL);
 	local _, class = UnitClass("player");
 	local faction = UnitFactionGroup("player");
-	local hitFromTalents = MCF_SpellHitCheckTalents();
+	local hitFromTalents = MCF_CheckHitTalents(class, "spells");
 	local schools;
 
 	local special = 0;
@@ -2369,7 +2496,7 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 	end
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
 		for i=1, #hitFromTalents do
-			if hitFromTalents[i].all then
+			if hitFromTalents[i].all_schools then
 				special = special + hitFromTalents[i].plusHit;
 			else
 				schools = hitFromTalents[i].schools;
@@ -2414,7 +2541,7 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 			GameTooltip:AddTexture(icon);
 			line = line + 1;
 
-			if (not hitFromTalents[i].all) then
+			if (not hitFromTalents[i].all_schools) then
 				local schoolsText = "";
 				for i, id in ipairs(schools) do
 					if (i ~= #schools) then
