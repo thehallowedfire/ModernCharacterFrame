@@ -2245,7 +2245,10 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 		local _, _, _, _, rank = GetTalentInfo(2, 16);
 		if (rank > 0) then
 			local id = GetInventoryItemID("player", 16);
-			if id then
+			if (not id) then
+				id = GetInventoryItemID("player", 17);
+			end
+			if (id) then
 				local _,_,_,_,_,_,_,_, weapon_type = GetItemInfo(id);
 				if (weapon_type == "INVTYPE_WEAPON") then
 					special = special + rank;
