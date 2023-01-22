@@ -354,15 +354,18 @@ MCF_BASE_CRIT_HIT_TAKEN_CHANCE = {
 	[3] = 5.6;
 };
 
-MCF_TALENTS_FOR_SPELLHIT = {
+MCF_TALENTS_FOR_HIT = {
 	["DEATHKNIGHT"] = {
 		-- Virulence
 		[1] = {
 			tab = 3,
 			index = 1,
 			increment = 1,
-			all = true,
+			all_schools = true,
 			icon = "Interface\\Icons\\spell_shadow_burningspirit",
+			hit_types = {
+				"spells",
+			},
 		},
 	},
 	["DRUID"] = {
@@ -373,6 +376,23 @@ MCF_TALENTS_FOR_SPELLHIT = {
 			increment = 2,
 			all = true,
 			icon = "Interface\\Icons\\ability_druid_balanceofpower",
+			hit_types = {
+				'spells',
+			},
+		},
+	},
+	["HUNTER"] = {
+		-- Focused Aim
+		[1] = {
+			tab = 2,
+			index = 27,
+			increment = 1,
+			all_schools = true,
+			icon = "Interface\\Icons\\ability_hunter_focusedaim",
+			hit_types = {
+				"melee",
+				"ranged",
+			},
 		},
 	},
 	["MAGE"] = {
@@ -381,15 +401,18 @@ MCF_TALENTS_FOR_SPELLHIT = {
 			tab = 3,
 			index = 17,
 			increment = 1,
-			all = true,
+			all_schools = true,
 			icon = "Interface\\Icons\\spell_ice_magicdamage",
+			hit_types = {
+				"spells",
+			},
 		},
 		-- Arcane Focus
 		[2] = {
 			tab = 1,
 			index = 3,
 			increment = 1,
-			all = false,
+			all_schools = false,
 			schools = {
 				nil,
 				nil,
@@ -401,6 +424,9 @@ MCF_TALENTS_FOR_SPELLHIT = {
 				true,  -- Arcane
 			},
 			icon = "Interface\\Icons\\spell_holy_devotion",
+			hit_types = {
+				"spells",
+			},
 		},
 	},
 	["PALADIN"] = {
@@ -409,8 +435,9 @@ MCF_TALENTS_FOR_SPELLHIT = {
 			tab = 1,
 			index = 22,
 			increment = 2,
-			all = true,
+			all_schools = true,
 			icon = "Interface\\Icons\\ability_paladin_enlightenedjudgements",
+			hit_types = "all",
 		},
 	},
 	["PRIEST"] = {
@@ -419,7 +446,7 @@ MCF_TALENTS_FOR_SPELLHIT = {
 			tab = 3,
 			index = 3,
 			increment = 1,
-			all = false,
+			all_schools = false,
 			schools = {
 				nil,
 				nil,
@@ -431,6 +458,20 @@ MCF_TALENTS_FOR_SPELLHIT = {
 				false, -- Arcane
 			},
 			icon = "Interface\\Icons\\spell_shadow_burningspirit",
+			hit_types = {
+				"spells",
+			},
+		},
+	},
+	["ROGUE"] = {
+		-- Precision
+		[1] = {
+			tab = 2,
+			index = 1,
+			increment = 1,
+			all_schools = true,
+			icon = "Interface\\Icons\\ability_marksmanship",
+			hit_types = "all",
 		},
 	},
 	["SHAMAN"] = {
@@ -443,7 +484,7 @@ MCF_TALENTS_FOR_SPELLHIT = {
 			tab = 1,
 			index = 16,
 			increment = 1,
-			all = false,
+			all_schools = false,
 			schools = {
 				nil,
 				nil,
@@ -455,6 +496,9 @@ MCF_TALENTS_FOR_SPELLHIT = {
 				false, -- Arcane
 			},
 			icon = "Interface\\Icons\\spell_nature_elementalprecision_1",
+			hit_types = {
+				"spells",
+			},
 		},
 	},
 	["WARLOCK"] = {
@@ -463,8 +507,25 @@ MCF_TALENTS_FOR_SPELLHIT = {
 			tab = 1,
 			index = 5,
 			increment = 1,
-			all = true,
+			all_schools = true,
 			icon = "Interface\\Icons\\spell_shadow_unsummonbuilding",
+			hit_type = {
+				"spells",
+			},
+		},
+	},
+	["WARRIOR"] = {
+		-- Precision
+		[1] = {
+			tab = 2,
+			index = 18,
+			increment = 1,
+			all_schools = true,
+			icon = "Interface\\Icons\\ability_marksmanship",
+			hit_types = {
+				"melee",
+				"ranged",
+			},
 		},
 	},
 };
