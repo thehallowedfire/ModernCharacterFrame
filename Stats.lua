@@ -691,8 +691,8 @@ function MCF_GetCritHitTakenChance(levelOffset, special)
 		return 0;
 	end
 	local chance = MCF_BASE_CRIT_HIT_TAKEN_CHANCE[levelOffset];
-	local currentDef = UnitDefense("player");
-	local defDifference = UnitLevel("player") * 5 - currentDef;
+	local currentDef, modifier = UnitDefense("player");
+	local defDifference = UnitLevel("player") * 5 - currentDef + modifier;
 	local critChanceFromResilience = GetCombatRatingBonus(CR_RESILIENCE_CRIT_TAKEN);
 
 	local _, class = UnitClass("player");
@@ -1260,9 +1260,24 @@ function MCF_PaperDollFrame_SetMeleeHitChance(statFrame, unit)
 	local text = _G[statFrame:GetName().."StatText"];
 	local hitChance = GetCombatRatingBonus(CR_HIT_MELEE);--[[  + GetHitModifier(); ]] --MCFFIX isn't needed in Wrath Classic.
 
+	-- Check for Alliance Shamans racial ability
 	local _, class = UnitClass("player");
 	if (class == "SHAMAN" and UnitFactionGroup("player") == "Alliance") then
 		hitChance = hitChance + 1;
+	end
+	
+	-- Check DK's "Nerves of Cold Steel talent and equipped weapon type
+	if (class == "DEATHKNIGHT") then
+		local _, _, _, _, rank = GetTalentInfo(2, 16);
+		if (rank > 0) then
+			local id = GetInventoryItemID("player", 16);
+			if id then
+				local _,_,_,_,_,_,_,_, weapon_type = GetItemInfo(id);
+				if (weapon_type == "INVTYPE_WEAPON") then
+					hitChance = hitChance + rank;
+				end
+			end
+		end
 	end
 
 	local hitFromTalents = MCF_CheckHitTalents(class, "melee");
@@ -2221,6 +2236,22 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 		end
 	end
 
+	-- Check DK's "Nerves of Cold Steel talent and equipped weapon type
+	local dk_cold_steel = nil;
+	if (class == "DEATHKNIGHT") then
+		local _, _, _, _, rank = GetTalentInfo(2, 16);
+		if (rank > 0) then
+			local id = GetInventoryItemID("player", 16);
+			if id then
+				local _,_,_,_,_,_,_,_, weapon_type = GetItemInfo(id);
+				if (weapon_type == "INVTYPE_WEAPON") then
+					special = special + rank;
+					dk_cold_steel = rank;
+				end
+			end
+		end
+	end
+
 	hitChance = hitChance + special;
 	if (hitChance >= 0) then
 		hitChance = format("+%.2F%%", hitChance);
@@ -2229,16 +2260,24 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 	end
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
 	GameTooltip:AddLine(format(L["MCF_STAT_HIT_MELEE_TOOLTIP"], GetCombatRating(CR_HIT_MELEE), GetCombatRatingBonus(CR_HIT_MELEE)));
-	GameTooltip:AddLine(" ");
 
 	if (class == "SHAMAN" and faction == "Alliance") then
+		GameTooltip:AddLine(" ");
 		GameTooltip:AddLine(L["MCF_TALENT_AND_PASSIVE_ABILITY_EFFECTS_ACTIVE"]);
 		GameTooltip:AddDoubleLine(GetSpellInfo(6562), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], 1)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 		GameTooltip:AddTexture("Interface\\Icons\\inv_helmet_21");
 	end
 
+	if (dk_cold_steel) then
+		GameTooltip:AddLine(" ");
+		GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+		GameTooltip:AddDoubleLine(GetTalentInfo(2, 16), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], dk_cold_steel)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+		GameTooltip:AddTexture("Interface\\Icons\\ability_dualwield");
+	end
+
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
 		if (class ~= "SHAMAN") then
+			GameTooltip:AddLine(" ");
 			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
 		end
 
@@ -2251,9 +2290,9 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(description, talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 			GameTooltip:AddTexture(icon);
 		end
-		GameTooltip:AddLine(" ");
 	end
 
+	GameTooltip:AddLine(" ");
 	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 	if (IsDualWielding()) then
 		GameTooltip:AddLine(STAT_HIT_NORMAL_ATTACKS, GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
@@ -2396,9 +2435,9 @@ function MCF_RangedHitChance_OnEnter(statFrame)
 	end
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
 	GameTooltip:AddLine(format(L["MCF_STAT_HIT_RANGED_TOOLTIP"], GetCombatRating(CR_HIT_RANGED), GetCombatRatingBonus(CR_HIT_RANGED)));
-	GameTooltip:AddLine(" ");
 
 	if (class == "SHAMAN" and faction == "Alliance") then
+		GameTooltip:AddLine(" ");
 		GameTooltip:AddLine(L["MCF_TALENT_AND_PASSIVE_ABILITY_EFFECTS_ACTIVE"]);
 		GameTooltip:AddDoubleLine(GetSpellInfo(6562), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], 1)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 		GameTooltip:AddTexture("Interface\\Icons\\inv_helmet_21");
@@ -2406,6 +2445,7 @@ function MCF_RangedHitChance_OnEnter(statFrame)
 
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
 		if (class ~= "SHAMAN") then
+			GameTooltip:AddLine(" ");
 			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
 		end
 
@@ -2418,9 +2458,9 @@ function MCF_RangedHitChance_OnEnter(statFrame)
 			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(description, talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 			GameTooltip:AddTexture(icon);
 		end
-		GameTooltip:AddLine(" ");
 	end
 
+	GameTooltip:AddLine(" ");
 	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 	local playerLevel = UnitLevel("player");
 	for i=0, 3 do
@@ -2513,11 +2553,11 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_HIT_CHANCE).." "..hitChance..FONT_COLOR_CODE_CLOSE);
 	
 	GameTooltip:AddLine(format(L["MCF_STAT_HIT_SPELL_TOOLTIP"], GetCombatRating(CR_HIT_SPELL), GetCombatRatingBonus(CR_HIT_SPELL)));
-	GameTooltip:AddLine(" ");
 
 	local line = 3;
 	-- If unit is Alliance Shaman then use another "talents active" string and add racial Heroic Presence buff (+1% hit)
 	if (class == "SHAMAN" and faction == "Alliance") then
+		GameTooltip:AddLine(" ");
 		GameTooltip:AddLine(L["MCF_TALENT_AND_PASSIVE_ABILITY_EFFECTS_ACTIVE"]);
 		GameTooltip:AddDoubleLine(GetSpellInfo(6562), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], 1)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 		GameTooltip:AddTexture("Interface\\Icons\\inv_helmet_21");
@@ -2527,6 +2567,7 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
 		-- If unit is not Alliance Shaman (otherwise line would be 5)
 		if (line == 3) then
+			GameTooltip:AddLine(" ");
 			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
 			line = line + 1;
 		end
@@ -2563,10 +2604,10 @@ function MCF_SpellHitChance_OnEnter(statFrame)
 				right.changed = true;
 			end
 		end
-		GameTooltip:AddLine(" ");
 	end
 	statFrame.lines = line;
 
+	GameTooltip:AddLine(" ");
 	GameTooltip:AddDoubleLine(STAT_TARGET_LEVEL, MISS_CHANCE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 	local playerLevel = UnitLevel("player");
 	for i=0, 3 do
