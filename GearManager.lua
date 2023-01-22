@@ -144,7 +144,7 @@ function MCF_PaperDollEquipmentManagerPaneEquipSet_OnClick (self)
 
 	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB);
 	if ( InCombatLockdown() ) then
-		UIErrorsFrame:AddMessage(ERR_CLIENT_LOCKED_OUT, 1.0, 0.1, 0.1, 1.0);
+		UIErrorsFrame:AddMessage(ERR_NOT_IN_COMBAT, 1.0, 0.1, 0.1, 1.0);
 	elseif ( selectedSetID ) then
 		--[[ C_EquipmentSet.UseEquipmentSet(C_EquipmentSet.GetEquipmentSetID(selectedSetName)); ]]
         EquipmentManager_EquipSet(selectedSetID);
@@ -226,7 +226,7 @@ function MCF_GearSetButton_OnDoubleClick(self)
 	local id = self.setID;
 	PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB);
 	if ( InCombatLockdown() ) then
-		UIErrorsFrame:AddMessage(ERR_CLIENT_LOCKED_OUT, 1.0, 0.1, 0.1, 1.0);
+		UIErrorsFrame:AddMessage(ERR_NOT_IN_COMBAT, 1.0, 0.1, 0.1, 1.0);
 	elseif ( id ) then
 		C_EquipmentSet.UseEquipmentSet(id);
 	end
