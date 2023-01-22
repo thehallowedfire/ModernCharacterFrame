@@ -691,9 +691,12 @@ function MCF_GetCritHitTakenChance(levelOffset, special)
 		return 0;
 	end
 	local chance = MCF_BASE_CRIT_HIT_TAKEN_CHANCE[levelOffset];
-	local currentDef, modifier = UnitDefense("player");
-	local defDifference = UnitLevel("player") * 5 - currentDef + modifier;
+	local currentDef, currentModifier = UnitDefense("player");
+	local defFromRating = GetCombatRatingBonus(CR_DEFENSE_SKILL);
+	local defDifference = UnitLevel("player") * 5 - currentDef;
 	local critChanceFromResilience = GetCombatRatingBonus(CR_RESILIENCE_CRIT_TAKEN);
+	
+	currentModifier = currentModifier - math.floor(defFromRating);
 
 	local _, class = UnitClass("player");
 	local druidTalentPercent = 0;
@@ -704,7 +707,7 @@ function MCF_GetCritHitTakenChance(levelOffset, special)
 		end
 	end
 
-	chance = chance - GetDodgeBlockParryChanceFromDefense() - critChanceFromResilience - druidTalentPercent + defDifference * 0.04;
+	chance = chance - GetDodgeBlockParryChanceFromDefense() - critChanceFromResilience - druidTalentPercent + defDifference * 0.04 + currentModifier * 0.04;
 	if (chance < 0) then
 		chance = 0;
 	elseif (chance > 100) then
