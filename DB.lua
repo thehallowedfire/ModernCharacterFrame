@@ -356,6 +356,8 @@ MCF_BASE_CRIT_HIT_TAKEN_CHANCE = {
 
 MCF_TALENTS_FOR_HIT = {
 	["DEATHKNIGHT"] = {
+		-- Nerves of Cold Steel has manual check in Stats.lua
+		
 		-- Virulence
 		[1] = {
 			tab = 3,
@@ -374,7 +376,7 @@ MCF_TALENTS_FOR_HIT = {
 			tab = 1,
 			index = 13,
 			increment = 2,
-			all = true,
+			all_schools = true,
 			icon = "Interface\\Icons\\ability_druid_balanceofpower",
 			hit_types = {
 				'spells',
@@ -475,10 +477,8 @@ MCF_TALENTS_FOR_HIT = {
 		},
 	},
 	["SHAMAN"] = {
-		-- Heroic Presence HACK
-		--[[ [1] = {
-			icon = "Interface\\Icons\\inv_helmet_21",
-		}, ]]
+		-- Heroic Presence (racial) has manual check in Stats.lua
+
 		-- Elemental Precision
 		[1] = {
 			tab = 1,
@@ -500,6 +500,7 @@ MCF_TALENTS_FOR_HIT = {
 				"spells",
 			},
 		},
+		-- Dual Wield Specialization has manual check in Stats.lua
 	},
 	["WARLOCK"] = {
 		-- Suppression
