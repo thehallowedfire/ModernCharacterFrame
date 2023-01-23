@@ -1287,6 +1287,14 @@ function MCF_PaperDollFrame_SetMeleeHitChance(statFrame, unit)
 		end
 	end
 
+	-- Check Shaman's Dual Wield Specialization talent and dual wielding
+	if (class == "SHAMAN") then
+		local _, _, _, _, rank = GetTalentInfo(2, 19);
+		if ((rank > 0) and IsDualWielding()) then
+			hitChance = hitChance + rank * 2;
+		end
+	end
+
 	local hitFromTalents = MCF_CheckHitTalents(class, "melee");
 	if (hitFromTalents and #hitFromTalents > 0) then
 		for i=1, #hitFromTalents do
@@ -2264,6 +2272,16 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 		end
 	end
 
+	-- Check Shaman's "Dual Wielding Specialization" talent and dual wielding
+	local shaman_dualwield_spec = nil;
+	if (class == "SHAMAN") then
+		local _, _, _, _, rank = GetTalentInfo(2, 19);
+		if ((rank > 0) and IsDualWielding()) then
+			special = special + rank * 2;
+			shaman_dualwield_spec = rank * 2;
+		end
+	end
+
 	hitChance = hitChance + special;
 	if (hitChance >= 0) then
 		hitChance = format("+%.2F%%", hitChance);
@@ -2287,6 +2305,15 @@ function MCF_MeleeHitChance_OnEnter(statFrame)
 		end
 		GameTooltip:AddDoubleLine(GetTalentInfo(2, 16), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], dk_cold_steel)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
 		GameTooltip:AddTexture("Interface\\Icons\\ability_dualwield");
+	end
+
+	if (shaman_dualwield_spec) then
+		if (race ~= "Draenei") then
+			GameTooltip:AddLine(" ");
+			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+		end
+		GameTooltip:AddDoubleLine(GetTalentInfo(2, 19), GREEN_FONT_COLOR_CODE..format(L["MCF_TALENT_DESC_BASE"], shaman_dualwield_spec)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+		GameTooltip:AddTexture("Interface\\Icons\\ability_dualwieldspecialization");
 	end
 
 	if ( hitFromTalents and (#hitFromTalents > 0) ) then
