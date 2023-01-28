@@ -117,6 +117,10 @@ function MCF_CharacterFrame_OnShow(self)
     MCF_CleanDefaultFrame();
 	MCF_CharacterFrame_UpdatePortrait();
     MCF_PaperDollFrame_SetLevel();
+	if (not PaperDollFrame:IsShown()) then
+		MCF_CharacterFrame_Collapse();
+		CharacterFrameExpandButton:Hide();
+	end
     CharacterNameText:SetText(UnitPVPName("player"));
 	UpdateMicroButtons();
 	PlayerFrameHealthBar.showNumeric = true;
