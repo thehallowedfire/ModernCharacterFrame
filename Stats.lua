@@ -518,7 +518,7 @@ function MCF_CalculateAverageItemLevel()
     for i=1, 18 do
         if ( (i ~= 4) and GetInventoryItemID("player", i) ) then
             local id, _ = GetInventoryItemID("player", i);
-            local _, _, _, ilvl = GetItemInfo(id);
+            local ilvl = GetDetailedItemLevelInfo(id); -- Attempt to fix error when item isn't loaded at first open
             sumItemLevel = sumItemLevel + ilvl;
             itemCount = itemCount + 1;
         end
