@@ -347,13 +347,6 @@ MCF_BASE_ENEMY_PARRY_CHANCE = {
 
 MCF_DUAL_WIELD_HIT_PENALTY = 19.0;
 
-MCF_BASE_CRIT_HIT_TAKEN_CHANCE = {
-	[0] = 5.0;
-	[1] = 5.2;
-	[2] = 5.4;
-	[3] = 5.6;
-};
-
 MCF_TALENTS_FOR_HIT = {
 	["DEATHKNIGHT"] = {
 		-- Nerves of Cold Steel has manual check in Stats.lua
