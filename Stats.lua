@@ -690,24 +690,24 @@ function MCF_GetCritHitTakenChance(levelOffset, special)
 	if (levelOffset < 0 or levelOffset > 3) then
 		return 0;
 	end
-	local chance = MCF_BASE_CRIT_HIT_TAKEN_CHANCE[levelOffset];
-	local currentDef, currentModifier = UnitDefense("player");
-	local defFromRating = GetCombatRatingBonus(CR_DEFENSE_SKILL);
-	local defDifference = UnitLevel("player") * 5 - currentDef;
+	local chance = 5 + levelOffset * 0.04 * 5; -- Base crit hit taken chance (5, 5.2, 5.4, 5.6)
+	local defSkill, currentModifier = UnitDefense("player");
+	local currentDefTotal = defSkill + currentModifier;
+	local defDifference = currentDefTotal - UnitLevel("player") * 5;
 	local critChanceFromResilience = GetCombatRatingBonus(CR_RESILIENCE_CRIT_TAKEN);
-	
-	currentModifier = currentModifier - math.floor(defFromRating);
 
 	local _, class = UnitClass("player");
-	local druidTalentPercent = 0;
-	if ( class == "DRUID" ) then
+	local specialTalentPercent = 0;
+	if (class == "DRUID") then
 		local _,_,_,_, rank = GetTalentInfo(2, 18);
-		if (rank > 0) then
-			druidTalentPercent = rank * 2;
-		end
+		specialTalentPercent = rank * 2;
+	end
+	if (class == "WARLOCK") then
+		local _,_,_,_, rank = GetTalentInfo(2, 20);
+		specialTalentPercent = rank;
 	end
 
-	chance = chance - GetDodgeBlockParryChanceFromDefense() - critChanceFromResilience - druidTalentPercent + defDifference * 0.04 + currentModifier * 0.04;
+	chance = chance - defDifference * 0.04 - critChanceFromResilience - specialTalentPercent;
 	if (chance < 0) then
 		chance = 0;
 	elseif (chance > 100) then
@@ -2688,8 +2688,8 @@ function MCF_Defense_OnEnter(statFrame)
 	GameTooltip:SetOwner(statFrame, "ANCHOR_RIGHT");
 
 	local base, modifier = UnitDefense("player");
-	local defensePercent = GetDodgeBlockParryChanceFromDefense();
 	local CritHitTakenChance = GetCombatRatingBonus(CR_DEFENSE_SKILL);
+	local percentFromRating = CritHitTakenChance * 0.04;
 
 	local posBuff = 0;
 	local negBuff = 0;
@@ -2709,15 +2709,28 @@ function MCF_Defense_OnEnter(statFrame)
 
 	GameTooltip:SetText(HIGHLIGHT_FONT_COLOR_CODE..defenseText..FONT_COLOR_CODE_CLOSE);
 
-	GameTooltip:AddLine(format(DEFAULT_STATDEFENSE_TOOLTIP, GetCombatRating(CR_DEFENSE_SKILL), GetCombatRatingBonus(CR_DEFENSE_SKILL), defensePercent, defensePercent));
+	GameTooltip:AddLine(format(DEFAULT_STATDEFENSE_TOOLTIP, GetCombatRating(CR_DEFENSE_SKILL), GetCombatRatingBonus(CR_DEFENSE_SKILL), percentFromRating, percentFromRating));
 	GameTooltip:AddLine(" ");
 
+	-- Check for specific talents that decrease chance to be critically hit
 	local _, class = UnitClass("player");
 	if ( class == "DRUID" ) then
 		local talentName, _, _, _, rank = GetTalentInfo(2, 18);
 		if (rank > 0) then
 			local icon = "Interface\\Icons\\Ability_Druid_Enrage";
 			local talentPercent = rank * 2;
+
+			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
+			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"], talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+			GameTooltip:AddTexture(icon);
+			GameTooltip:AddLine(" ");
+		end
+	end
+	if ( class == "WARLOCK" ) then
+		local talentName, _, _, _, rank = GetTalentInfo(2, 20);
+		if (rank > 0) then
+			local icon = "Interface\\Icons\\spell_shadow_demonicfortitude";
+			local talentPercent = rank;
 
 			GameTooltip:AddLine(L["MCF_TALENT_EFFECTS_ACTIVE"]);
 			GameTooltip:AddDoubleLine(talentName, GREEN_FONT_COLOR_CODE..format(L["MCF_DEFENSE_TOOLTIP_DRUID_TALENT"], talentPercent)..FONT_COLOR_CODE_CLOSE, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
