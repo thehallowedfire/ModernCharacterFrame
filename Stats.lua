@@ -1837,6 +1837,18 @@ function MCF_PaperDollFrame_SetSpellPenetration(statFrame, unit)
 	statFrame:Show();
 end
 
+-- These vars needed for checking if Mana regen update is needed (on UNIT_AURA event)
+local MCF_ManaRegenVisible = 0;
+local MCF_CombatManaRegenVisible = 0;
+function MCF_PaperDollFrame_UpdateManaRegen(self)
+	local base, casting = GetManaRegen();
+	base = floor( base * 5.0 );
+	casting = floor( casting * 5.0 );
+	if ((MCF_ManaRegenVisible ~= base) or (MCF_CombatManaRegenVisible ~= casting)) then
+		self:SetScript("OnUpdate", MCF_PaperDollFrame_QueuedUpdate);
+	end
+end
+
 function MCF_PaperDollFrame_SetManaRegen(statFrame, unit)
 	if ( unit ~= "player" ) then
 		statFrame:Hide();
@@ -1859,6 +1871,8 @@ function MCF_PaperDollFrame_SetManaRegen(statFrame, unit)
 	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. L["MCF_MANA_REGEN"] .. FONT_COLOR_CODE_CLOSE;
 	statFrame.tooltip2 = format(L["MCF_MANA_REGEN_TOOLTIP"], base);
 	statFrame:Show();
+
+	MCF_ManaRegenVisible = base;
 end
 
 function MCF_PaperDollFrame_SetCombatManaRegen(statFrame, unit)
@@ -1883,6 +1897,8 @@ function MCF_PaperDollFrame_SetCombatManaRegen(statFrame, unit)
 	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. MANA_REGEN_COMBAT .. FONT_COLOR_CODE_CLOSE;
 	statFrame.tooltip2 = format(MANA_COMBAT_REGEN_TOOLTIP, casting);
 	statFrame:Show();
+
+	MCF_CombatManaRegenVisible = casting;
 end
 
 function MCF_PaperDollFrame_SetSpellCritChance(statFrame, unit)
