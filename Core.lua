@@ -60,7 +60,6 @@ function MCF_OnEvent(self, event, ...)
 		GearManagerDialog:SetSize(0, 0);
 		GearManagerDialog:SetPoint("TOPLEFT", CharacterFrame, "TOPLEFT", 10, -12);
 
-
         -- Registering events on CharacterFrame
         CharacterFrame:RegisterEvent("PLAYER_PVP_RANK_CHANGED");
         CharacterFrame:RegisterEvent("PREVIEW_TALENT_POINTS_CHANGED");
@@ -175,7 +174,7 @@ function MCF_PaperDollFrame_OnLoad(self)
 	self:RegisterEvent("BAG_UPDATE");
 	self:RegisterEvent("PLAYER_EQUIPMENT_CHANGED");
 	--self:RegisterEvent("PLAYER_BANKSLOTS_CHANGED");
-	--self:RegisterEvent("PLAYER_AVG_ITEM_LEVEL_READY");
+	self:RegisterEvent("PLAYER_AVG_ITEM_LEVEL_UPDATE");
 	self:RegisterEvent("PLAYER_DAMAGE_DONE_MODS");
 	self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED");
 	self:RegisterEvent("UNIT_MAXHEALTH");
@@ -220,8 +219,16 @@ function MCF_PaperDollFrame_OnEvent(self, event, ...)
 		end
 	end
 	
-	if ( event == "COMBAT_RATING_UPDATE" or event=="MASTERY_UPDATE" or event == "BAG_UPDATE" or event == "PLAYER_EQUIPMENT_CHANGED" or event == "PLAYER_BANKSLOTS_CHANGED" or event == "PLAYER_AVG_ITEM_LEVEL_READY" or event == "PLAYER_DAMAGE_DONE_MODS") then
+	if ( event == "COMBAT_RATING_UPDATE" or event=="MASTERY_UPDATE" or event == "BAG_UPDATE" or event == "PLAYER_EQUIPMENT_CHANGED" or event == "PLAYER_BANKSLOTS_CHANGED" or event == "PLAYER_AVG_ITEM_LEVEL_UPDATE" or event == "PLAYER_DAMAGE_DONE_MODS") then
 		self:SetScript("OnUpdate", MCF_PaperDollFrame_QueuedUpdate);
+		if (event == "PLAYER_EQUIPMENT_CHANGED") then
+			local itemSlotID, isEmpty = ...;
+			if (not isEmpty) then
+				MCF_SetItemQuality(itemSlotID);
+			else
+				MCF_ClearItemQuality(itemSlotID);
+			end
+		end
 	elseif (event == "VARIABLES_LOADED") then
 		if (MCF_GetSettings("characterFrameCollapsed") ~= "0") then
 			MCF_CharacterFrame_Collapse();
@@ -279,6 +286,13 @@ function MCF_PaperDollFrame_OnShow(self)
 	MCF_SetPaperDollBackground(CharacterModelFrame, "player");
 	MCF_PaperDollBgDesaturate(1);
 	PaperDollSidebarTabs:Show();
+
+	if (not self.initItemsColoring) then
+		for id,_ in pairs(MCF_ItemSlotNames) do
+			MCF_SetItemQuality(id);
+		end
+		self.initItemsColoring = true;
+	end
 end
 function MCF_PaperDollFrame_OnHide(self)
     CharacterFrameInset:Hide();

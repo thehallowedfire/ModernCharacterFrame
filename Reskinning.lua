@@ -165,3 +165,65 @@ function MCF_ReskinTabButtons(tabButton)
 
     tabButton.selectedTextY = nil;
 end
+
+MCF_ItemSlotNames = {
+    [1] = CharacterHeadSlot,
+    [2] = CharacterNeckSlot,
+    [3] = CharacterShoulderSlot,
+    [4] = CharacterShirtSlot,
+    [5] = CharacterChestSlot,
+    [6] = CharacterWaistSlot,
+    [7] = CharacterLegsSlot,
+    [8] = CharacterFeetSlot,
+    [9] = CharacterWristSlot,
+    [10] = CharacterHandsSlot,
+    [11] = CharacterFinger0Slot,
+    [12] = CharacterFinger1Slot,
+    [13] = CharacterTrinket0Slot,
+    [14] = CharacterTrinket1Slot,
+    [15] = CharacterBackSlot,
+    [16] = CharacterMainHandSlot,
+    [17] = CharacterSecondaryHandSlot,
+    [18] = CharacterRangedSlot,
+    [19] = CharacterTabardSlot,
+};
+-- Restored item quality functions
+function MCF_SetItemQuality(itemSlotID)
+    local quality = GetInventoryItemQuality("player", itemSlotID);
+    local itemSlot = MCF_ItemSlotNames[itemSlotID];
+	MCF_SetItemButtonQuality(itemSlot, quality);
+end
+function MCF_ClearItemQuality(itemSlotID)
+    local itemSlot = MCF_ItemSlotNames[itemSlotID];
+    itemSlot.IconBorder:Hide();
+end
+function MCF_SetItemButtonQuality(button, quality)
+	if button then
+        local hasQuality = quality and BAG_ITEM_QUALITY_COLORS[quality];
+	    if hasQuality then
+		    MCF_SetItemButtonBorder(button, [[Interface\Common\WhiteIconFrame]]);
+
+		    local color = BAG_ITEM_QUALITY_COLORS[quality];
+		    MCF_SetItemButtonBorderVertexColor(button, color.r, color.g, color.b);
+            if MCF_GetSettings("enableItemSlotColoring") then
+                button.IconBorder:Show();
+            else
+                button.IconBorder:Hide();
+            end
+        else
+            button.IconBorder:Hide();
+        end
+	end
+end
+function MCF_SetItemButtonBorder(button, asset)
+	button.IconBorder:SetShown(asset ~= nil);
+	if asset then
+		button.IconBorder:SetTexture(asset);
+	end
+end
+function MCF_SetItemButtonBorderVertexColor(button, r, g, b)
+	if button.IconBorder then
+		button.IconBorder:SetVertexColor(r, g, b);
+	end
+end
+
