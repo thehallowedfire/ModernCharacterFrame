@@ -18,6 +18,9 @@ if (GetLocale() == "ruRU") then
     -- OPTIONS FRAME
     -- Please  translate also "Re-skins default Character frame into modern version.", "Version:", "Author:" and your version of "<your language> translation:"
     L["MCF_OPTIONS_DESCRIPTION"] = "Придает современный вид стандартному окну персонажа.\n\nВерсия: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nАвтор: Профессия — Flamegor (EU).";
+    -- Coloring Item Slots
+    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"] = "Цвет качества вещей";
+    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"] = "Отображение цвета качества вещей в окне персонажа.";
     -- Taco Tip integration
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "TacoTip's Gear Score";
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE_DISABLED"] = "TacoTip's Gear Score "..RED_FONT_COLOR_CODE.."(аддон не загружен)"..FONT_COLOR_CODE_CLOSE;
