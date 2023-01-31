@@ -179,6 +179,7 @@ function MCF_PaperDollFrame_OnLoad(self)
 	self:RegisterEvent("PLAYER_DAMAGE_DONE_MODS");
 	self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED");
 	self:RegisterEvent("UNIT_MAXHEALTH");
+	self:RegisterEvent("UNIT_AURA"); -- MCF TEST check if it reduces performance
 	-- flyout settings
 	--[[ PaperDollItemsFrame.flyoutSettings = {
 		onClickFunc = PaperDollFrameItemFlyoutButton_OnClick,
@@ -198,7 +199,6 @@ function MCF_PaperDollFrame_OnEvent(self, event, ...)
 		event == "UNIT_MODEL_CHANGED" and unit == "player" ) then
 		CharacterModelFrame:SetUnit("player");
 		return;
-	
 	elseif ( --[[ event == "KNOWN_TITLES_UPDATE" or ( ]]event == "UNIT_NAME_UPDATE" and unit == "player"--[[ ) ]]) then
 		if (PaperDollTitlesPane:IsShown()) then
 			MCF_PaperDollTitlesPane_Update();
@@ -214,6 +214,9 @@ function MCF_PaperDollFrame_OnEvent(self, event, ...)
 			MCF_PaperDollFrame_SetLevel();
 		elseif ( event == "UNIT_DAMAGE" or event == "UNIT_ATTACK_SPEED" or event == "UNIT_RANGEDDAMAGE" or event == "UNIT_ATTACK" or event == "UNIT_STATS" or event == "UNIT_RANGED_ATTACK_POWER" or event == "UNIT_RESISTANCES" or event == "UNIT_SPELL_HASTE" or event == "UNIT_MAXHEALTH" ) then
 			self:SetScript("OnUpdate", MCF_PaperDollFrame_QueuedUpdate);
+		-- Hack: update stats if Mana regen values changed
+		elseif (event == "UNIT_AURA" and UnitHasMana(unit)) then
+			MCF_PaperDollFrame_UpdateManaRegen(self);
 		end
 	end
 	
