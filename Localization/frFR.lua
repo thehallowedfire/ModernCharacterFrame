@@ -1,4 +1,4 @@
-local addonName, L = ...;
+local _, L = ...;
 
 -- HOW TO TRANSLATE
 -- 1. Find Cata or Retail client's locales (I'd recommend to look on GitHub).
