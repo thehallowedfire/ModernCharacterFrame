@@ -1,4 +1,4 @@
-local addonName, L = ...;
+local _, L = ...;
 
 MCF_CHARACTERFRAME_EXPANDED_WIDTH = 540;
 
@@ -503,7 +503,7 @@ MCF_TALENTS_FOR_HIT = {
 			increment = 1,
 			all_schools = true,
 			icon = "Interface\\Icons\\spell_shadow_unsummonbuilding",
-			hit_type = {
+			hit_types = {
 				"spells",
 			},
 		},

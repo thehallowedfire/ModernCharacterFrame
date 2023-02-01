@@ -1,4 +1,4 @@
-local addonName, L = ...;
+local _, L = ...;
 
 local function defaultFunc(L, key)
     --[[ print("MCF debug - send it to author - key is missing:", key); ]]
