@@ -204,6 +204,15 @@ function MCF_PaperDollFrame_OnEvent(self, event, ...)
 		end
 	end
 	
+	if (self.initItemsColoring and event == "PLAYER_EQUIPMENT_CHANGED") then
+		local itemSlotID, isEmpty = ...;
+		if (not isEmpty) then
+			MCF_SetItemQuality(itemSlotID);
+		else
+			MCF_ClearItemQuality(itemSlotID);
+		end
+	end
+
 	if ( not self:IsVisible() ) then
 		return;
 	end
@@ -221,14 +230,6 @@ function MCF_PaperDollFrame_OnEvent(self, event, ...)
 	
 	if ( event == "COMBAT_RATING_UPDATE" or event=="MASTERY_UPDATE" or event == "BAG_UPDATE" or event == "PLAYER_EQUIPMENT_CHANGED" or event == "PLAYER_BANKSLOTS_CHANGED" or event == "PLAYER_AVG_ITEM_LEVEL_UPDATE" or event == "PLAYER_DAMAGE_DONE_MODS") then
 		self:SetScript("OnUpdate", MCF_PaperDollFrame_QueuedUpdate);
-		if (event == "PLAYER_EQUIPMENT_CHANGED") then
-			local itemSlotID, isEmpty = ...;
-			if (not isEmpty) then
-				MCF_SetItemQuality(itemSlotID);
-			else
-				MCF_ClearItemQuality(itemSlotID);
-			end
-		end
 	elseif (event == "VARIABLES_LOADED") then
 		if (MCF_GetSettings("characterFrameCollapsed") ~= "0") then
 			MCF_CharacterFrame_Collapse();
