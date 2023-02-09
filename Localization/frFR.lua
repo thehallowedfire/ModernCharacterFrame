@@ -104,7 +104,6 @@ if (GetLocale() == "frFR") then
     -- EQUIPMENT MANAGER
     L["MCF_EQUIPMENT_SETS_NAME_RESERVED"] = "Ce nom est réservé.";
 
-    -- NEW
     -- HIT TOOLTIP CUSTOM ADDITION
     L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"] = "Effets des talents et des compétences actifs:"; -- Talents and abilities effects active:
     L["MCF_TALENT_NOT_TAKEN_INTO_ACCOUNT"] = "|cff888888Non pris en compte|r"; --Not taken into account
