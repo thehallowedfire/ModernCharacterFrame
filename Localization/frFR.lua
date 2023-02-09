@@ -106,8 +106,8 @@ if (GetLocale() == "frFR") then
 
     -- NEW
     -- HIT TOOLTIP CUSTOM ADDITION
-    L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"] = "Talents and abilities effects active:";
-    L["MCF_TALENT_NOT_TAKEN_INTO_ACCOUNT"] = "|cff888888Not taken into account|r";
+    L["MCF_TALENTS_AND_ABILITIES_EFFECTS_ACTIVE"] = "Effets des talents et des compétences actifs:"; -- Talents and abilities effects active:
+    L["MCF_TALENT_NOT_TAKEN_INTO_ACCOUNT"] = "|cff888888Non pris en compte|r"; --Not taken into account
     -- Try to make the text authentic but as short as possible (authenticity is priority, though).
-    L["MCF_TALENT_DESC_BASE"] = "Hit Chance increased by %d%%";
+    L["MCF_TALENT_DESC_BASE"] = "Chance de toucher augmenté de %d%%";
 end
