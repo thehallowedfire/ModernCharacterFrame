@@ -1439,7 +1439,7 @@
                             </OnEnter>
                         </Scripts>
                     </CheckButton>
-                    <Frame name="$parentGSStatTypeDropDown" inherits="UIDropDownMenuTemplate" enableMouse="true">
+                    <!-- <Frame name="$parentGSStatTypeDropDown" inherits="UIDropDownMenuTemplate" enableMouse="true">
                         <Anchors>
                             <Anchor point="TOPLEFT" relativeTo="$parentEnableButton" relativePoint="BOTTOMLEFT">
                                 <Offset>
@@ -1472,16 +1472,16 @@
                             <OnShow function="MCF_OptionsFrameGSTextTypeDropDown_OnShow"/>
                             <OnLeave function="GameTooltip_Hide"/>
                         </Scripts>
-                    </Frame>
+                    </Frame> -->
                     <CheckButton name="$parentGSColorEnableButton" inherits="InterfaceOptionsCheckButtonTemplate">
                         <Size x="20" y="20"/>
-                        <Anchors>
+                        <!-- <Anchors>
                             <Anchor point="TOPLEFT" relativeTo="$parentGSStatTypeDropDown" relativePoint="BOTTOMLEFT">
                                 <Offset>
                                     <AbsDimension x="16" y="2"/>
                                 </Offset>
                             </Anchor>
-                        </Anchors>
+                        </Anchors> -->
                         <Scripts>
                             <OnLoad function="MCF_OptionsFrameGSColorEnableButton_OnLoad"/>
                             <OnShow function="MCF_OptionsFrameGSColorEnableButton_OnShow"/>
