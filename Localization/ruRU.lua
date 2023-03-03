@@ -21,6 +21,9 @@ if (GetLocale() == "ruRU") then
     -- Coloring Item Slots
     L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"] = "Цвет качества вещей";
     L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"] = "Отображение цвета качества вещей в окне персонажа.";
+    -- Repair Cost
+    L["MCF_OPTIONS_REPAIR_BUTTON_TEXT"] = "Стоимость ремонта";
+    L["MCF_OPTIONS_REPAIR_BUTTON_TOOLTIP"] = "Отображение приблизительной стоимости ремонта.";
     -- Taco Tip integration
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "TacoTip's Gear Score";
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE_DISABLED"] = "TacoTip's Gear Score "..RED_FONT_COLOR_CODE.."(аддон не загружен)"..FONT_COLOR_CODE_CLOSE;
@@ -67,6 +70,7 @@ if (GetLocale() == "ruRU") then
     -- General
     L["MCF_STAT_AVERAGE_ITEM_LEVEL_EQUIPPED"] = "(Надето %d)";
     L["MCF_STAT_GEARSCORE"] = "(Gear Score %d)";
+    L["MCF_STAT_REPAIR"] = "Стоимость ремонта (приблизительная)."
     -- Attributes
     L["MCF_DEFAULT_STAT1_TOOLTIP"] = "Сила атаки увеличена на %d.";
     L["MCF_DEFAULT_STAT2_TOOLTIP"] = "Повышает вероятность нанести критический удар на %.2f%%.\nУсиливает броню на %d.";
