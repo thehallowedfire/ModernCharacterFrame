@@ -60,6 +60,48 @@ function MCF_OptionsFrame_Update()
     end
 end
 
+-- ITEM QUALITY COLORS
+function MCF_OptionsFrame_ItemSlotColorButton_OnLoad(self)
+    self.Text:SetText(L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"]);
+    self.tooltip = L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"];
+    if MCF_GetSettings("enableItemSlotColoring") then
+        self:SetChecked(true);
+    else
+        self:SetChecked(false);
+    end
+    self:HookScript("OnClick", function(self) MCF_OptionsFrame_ItemSlotColorButton_HookOnClick(self); end);
+end
+function MCF_OptionsFrame_ItemSlotColorButton_HookOnClick(self)
+    if self:GetChecked() then
+        MCF_SetSettings("enableItemSlotColoring", true);
+    else
+        MCF_SetSettings("enableItemSlotColoring", false);
+    end
+    for id,_ in pairs(MCF_ItemSlotNames) do
+        MCF_SetItemQuality(id);
+    end
+end
+
+-- REPAIR COST
+function MCF_OptionsFrame_RepairCostButton_OnLoad(self)
+    self.Text:SetText(L["MCF_OPTIONS_REPAIR_BUTTON_TEXT"]);
+    self.tooltip = L["MCF_OPTIONS_REPAIR_BUTTON_TOOLTIP"];
+    if MCF_GetSettings("showRepairCost") then
+        self:SetChecked(true);
+    else
+        self:SetChecked(false);
+    end
+    self:HookScript("OnClick", function(self) MCF_OptionsFrame_RepairCostButton_HookOnClick(self); end);
+end
+function MCF_OptionsFrame_RepairCostButton_HookOnClick(self)
+    if self:GetChecked() then
+        MCF_SetSettings("showRepairCost", true);
+    else
+        MCF_SetSettings("showRepairCost", false);
+    end
+end
+
+
 -- TACOTIP INTEGRATION ENABLE BUTTON FUNCTIONS
 function MCF_OptionsFrameTTEnableButton_OnLoad(self)
     self.Text:SetText(L["MCF_OPTIONS_TT_INTEGRATION_ENABLE_LABEL"]);
@@ -247,25 +289,4 @@ function MCF_OptionsFrameResetSettingsButton_OnClick(self)
     }
 
     StaticPopup_Show("MCF_RESET_SETTINGS", self);
-end
-
-function MCF_OptionsFrame_ItemSlotColorButton_OnLoad(self)
-    self.Text:SetText(L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"]);
-    self.tooltip = L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"];
-    if MCF_GetSettings("enableItemSlotColoring") then
-        self:SetChecked(true);
-    else
-        self:SetChecked(false);
-    end
-    self:HookScript("OnClick", function(self) MCF_OptionsFrame_ItemSlotColorButton_HookOnClick(self); end);
-end
-function MCF_OptionsFrame_ItemSlotColorButton_HookOnClick(self)
-    if self:GetChecked() then
-        MCF_SetSettings("enableItemSlotColoring", true);
-    else
-        MCF_SetSettings("enableItemSlotColoring", false);
-    end
-    for id,_ in pairs(MCF_ItemSlotNames) do
-        MCF_SetItemQuality(id);
-    end
 end
