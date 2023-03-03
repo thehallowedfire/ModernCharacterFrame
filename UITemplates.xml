@@ -429,6 +429,21 @@
 					</Anchors>
 				</FontString>
 			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="-2">
+				<Texture parentKey="SpecRing" atlas="equipmentmanager-spec-border" useAtlasSize="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="18" y="-18"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="OVERLAY" textureSubLevel="-3">
+				<Texture parentKey="SpecIcon">
+					<Size x="18" y="18"/>
+					<Anchors>
+						<Anchor point="CENTER" relativeKey="$parent.SpecRing" relativePoint="CENTER" x="0" y="0"/>
+					</Anchors>
+				</Texture>
+			</Layer>
 			<Layer level="OVERLAY" textureSubLevel="-1">
 				<Texture name="$parentHighlightBar" parentKey="HighlightBar" file="Interface\FriendsFrame\UI-FriendsFrame-HighlightBar-Blue" alpha="0.4" alphaMode="ADD" hidden="true">
 					<TexCoords left="0.2" right="0.8" top="0" bottom="1"/>
@@ -474,7 +489,7 @@
 					</OnClick>
 				</Scripts>
 			</Button>
-			<Button name="$parentEditButton" parentKey="EditButton" hidden="true">
+			<DropDownToggleButton name="$parentEditButton" parentKey="EditButton" hidden="true">
 				<Size>
 					<AbsDimension x="16" y="16"/>
 				</Size>
@@ -487,30 +502,30 @@
 					</Layer>
 				</Layers>
 				<Scripts>
+					<OnLoad function="MCF_GearSetEditButton_OnLoad"/>
 					<OnEnter>
 						self.texture:SetAlpha(1.0);
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-						GameTooltip:SetText(EQUIPMENT_SET_EDIT);
+						--GameTooltip:SetText(EQUIPMENT_SET_EDIT); -- MCF FIX: Changed button tooltip text
+						GameTooltip:SetText(EQUIPMENT_SET_SETTINGS);
 					</OnEnter>
 					<OnLeave>
 						self.texture:SetAlpha(0.5);
 						GameTooltip_Hide();
 					</OnLeave>
-					<OnMouseDown>
-						self.texture:SetPoint("TOPLEFT", 1, -1);
-					</OnMouseDown>
+					<OnMouseDown function="MCF_GearSetEditButton_OnMouseDown"/>
 					<OnMouseUp>
 						self.texture:SetPoint("TOPLEFT", 0, 0);
 					</OnMouseUp>
-					<OnClick>
+					<!-- <OnClick>
 						MCF_GearSetButton_OnClick(self:GetParent());
 						MCF_GearManagerDialogPopup:Show();
 						MCF_GearManagerDialogPopup.isEdit = true;
 						MCF_GearManagerDialogPopup.origName = self:GetParent().name;
 						MCF_RecalculateGearManagerDialogPopup(self:GetParent().name, self:GetParent().icon:GetTexture());
-					</OnClick>
+					</OnClick> -->
 				</Scripts>
-			</Button>
+			</DropDownToggleButton>
 		</Frames>
 		<Scripts>
 			<OnLoad>
@@ -1390,7 +1405,22 @@
 				</Anchors>
 				<Scripts>
 					<OnLoad function="MCF_OptionsFrame_ItemSlotColorButton_OnLoad"/>
-					<!-- <OnShow function="MCF_OptionsFrameTTEnableButton_OnShow"/> -->
+					<OnEnter>
+						GameTooltip:SetOwner(self.Text, "ANCHOR_TOPLEFT", 0, 4);
+						GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true);
+					</OnEnter>
+				</Scripts>
+			</CheckButton>
+			<CheckButton name="$parentRepairCost" inherits="InterfaceOptionsCheckButtonTemplate">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeTo="$parentItemColorButton" relativePoint="BOTTOMLEFT">
+						<Offset>
+							<AbsDimension x="0" y="-8"/>
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnLoad function="MCF_OptionsFrame_RepairCostButton_OnLoad"/>
 					<OnEnter>
 						GameTooltip:SetOwner(self.Text, "ANCHOR_TOPLEFT", 0, 4);
 						GameTooltip:SetText(self.tooltip, nil, nil, nil, nil, true);
@@ -1402,7 +1432,7 @@
 					<AbsDimension x="200" y="107"/>
 				</Size>
 				<Anchors>
-					<Anchor point="TOPLEFT" relativeTo="$parentItemColorButton" relativePoint="BOTTOMLEFT">
+					<Anchor point="TOPLEFT" relativeTo="$parentRepairCost" relativePoint="BOTTOMLEFT">
 						<Offset>
 							<AbsDimension x="4" y="-8"/>
 						</Offset>
