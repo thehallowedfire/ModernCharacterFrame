@@ -2,7 +2,7 @@
 ## Title: Modern Character Frame
 ## Notes: Re-creates modern Character Frame
 ## Author: Vladislav Kondrashov
-## Version: 0.7.1
+## Version: 0.8.0
 ## SavedVariablesPerCharacter: MCF_SETTINGS
 
 Libs/LibStub.lua
