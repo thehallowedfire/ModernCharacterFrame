@@ -17,6 +17,9 @@ function MCF_OnEvent(self, event, ...)
 
         SetUIPanelAttribute(CharacterFrame, "pushable", 7);
 
+		-- Creating service frame
+		MCF_ScanTooltip = CreateFrame("GameTooltip", "MCF_ScanTooltip");
+
 		-- Creating options frame
 		MCF_CreateOptionsFrame();
 
@@ -179,6 +182,8 @@ function MCF_PaperDollFrame_OnLoad(self)
 	self:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED");
 	self:RegisterEvent("UNIT_MAXHEALTH");
 	self:RegisterEvent("UNIT_AURA"); -- MCF TEST check if it reduces performance
+	self:RegisterEvent("UPDATE_INVENTORY_DURABILITY");
+	self:RegisterEvent("MERCHANT_SHOW");
 	-- flyout settings
 	--[[ PaperDollItemsFrame.flyoutSettings = {
 		onClickFunc = PaperDollFrameItemFlyoutButton_OnClick,
@@ -228,7 +233,7 @@ function MCF_PaperDollFrame_OnEvent(self, event, ...)
 		end
 	end
 	
-	if ( event == "COMBAT_RATING_UPDATE" or event=="MASTERY_UPDATE" or event == "BAG_UPDATE" or event == "PLAYER_EQUIPMENT_CHANGED" or event == "PLAYER_BANKSLOTS_CHANGED" or event == "PLAYER_AVG_ITEM_LEVEL_UPDATE" or event == "PLAYER_DAMAGE_DONE_MODS") then
+	if ( event == "COMBAT_RATING_UPDATE" or event=="MASTERY_UPDATE" or event == "BAG_UPDATE" or event == "PLAYER_EQUIPMENT_CHANGED" or event == "PLAYER_BANKSLOTS_CHANGED" or event == "PLAYER_AVG_ITEM_LEVEL_UPDATE" or event == "PLAYER_DAMAGE_DONE_MODS" or event == "UPDATE_INVENTORY_DURABILITY" or event == "MERCHANT_SHOW") then
 		self:SetScript("OnUpdate", MCF_PaperDollFrame_QueuedUpdate);
 	elseif (event == "VARIABLES_LOADED") then
 		if (MCF_GetSettings("characterFrameCollapsed") ~= "0") then
