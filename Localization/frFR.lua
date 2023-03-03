@@ -73,7 +73,7 @@ if (GetLocale() == "frFR") then
     L["MCF_STAT_AVERAGE_ITEM_LEVEL_EQUIPPED"] = "(équipé %d)";
     L["MCF_STAT_GEARSCORE"] = "(Gear Score %d)";
     -- NEW - delete this line after translation
-    L["MCF_STAT_REPAIR"] = "Estimated repair cost."
+    L["MCF_STAT_REPAIR"] = "Estimated repair cost (for currently equipped items)."
     -- Attributes
     L["MCF_DEFAULT_STAT1_TOOLTIP"] = "Augmente la puissance d'attaque de %d"; -- "Augmente la puissance d'attaque de %d";
     L["MCF_DEFAULT_STAT2_TOOLTIP"] = "Augmente la chance de coup critique de %.2f%%"; -- "Augmente la chance de coup critique de %.2f%%";
