@@ -20,8 +20,8 @@ if (GetLocale() == "frFR") then
     L["MCF_OPTIONS_DESCRIPTION"] = "Transforme le cadre du personnage par défaut en une version moderne.\n\nVersion: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nAuteur: Профессия — Flamegor (EU).\nTraduction française: Datyb — Auberdine (EU).";
     -- NEW (delete this line after translation. Also check a few lines at the bottom)
     -- Coloring Item Slots
-    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"] = "Items quality color";
-    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"] = "Show items quality color";
+    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"] = "Couleur de la qualité d'objet"; -- Items quality color
+    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"] = "Afficher la couleur de la qualité d'objet"; -- Show items quality color
     -- Taco Tip integration
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "Score d'équipement de TacoTip";
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE_DISABLED"] = "Score d'équipement de TacoTip "..RED_FONT_COLOR_CODE.."(AddOn n'est pas chargé)"..FONT_COLOR_CODE_CLOSE;
