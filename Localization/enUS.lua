@@ -26,6 +26,9 @@ L["MCF_OPTIONS_DESCRIPTION"] = "Re-skins default Character frame into modern ver
 -- Coloring Item Slots
 L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"] = "Items quality color";
 L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"] = "Show items quality color";
+-- Repair Cost
+L["MCF_OPTIONS_REPAIR_BUTTON_TEXT"] = "Repair cost";
+L["MCF_OPTIONS_REPAIR_BUTTON_TOOLTIP"] = "Show estimated repair cost";
 -- Taco Tip integration
 L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "TacoTip's Gear Score";
 L["MCF_OPTIONS_TT_INTEGRATION_TITLE_DISABLED"] = "TacoTip's Gear Score "..RED_FONT_COLOR_CODE.."(AddOn isn't loaded)"..FONT_COLOR_CODE_CLOSE;
@@ -72,6 +75,7 @@ L["MCF_STAT_PARRY"] = STAT_PARRY; -- "Parry"
 -- General
 L["MCF_STAT_AVERAGE_ITEM_LEVEL_EQUIPPED"] = STAT_AVERAGE_ITEM_LEVEL_EQUIPPED; -- "(Equipped %d)"
 L["MCF_STAT_GEARSCORE"] = "(Gear Score %d)";
+L["MCF_STAT_REPAIR"] = "Estimated repair cost (for currently equipped items)."
 -- Attributes
 L["MCF_DEFAULT_STAT1_TOOLTIP"] = DEFAULT_STAT1_TOOLTIP; -- "Increases Attack Power by %d"
 L["MCF_DEFAULT_STAT2_TOOLTIP"] = DEFAULT_STAT2_TOOLTIP; -- "Increases Critical Hit chance by %.2f%%"

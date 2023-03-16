@@ -760,6 +760,32 @@ function MCF_GetEnemyParryChance(levelOffset)
 	return chance, offhandChance;
 end
 
+local ITEM_SLOTS_WITH_DURABILITY = {
+	[1] = _G.INVTYPE_HEAD,
+	[3] = _G.INVTYPE_SHOULDER,
+	[5] = _G.INVTYPE_CHEST,
+	[6] = _G.INVTYPE_WAIST,
+	[7] = _G.INVTYPE_LEGS,
+	[8] = _G.INVTYPE_FEET,
+	[9] = _G.INVTYPE_WRIST,
+   [10] = _G.INVTYPE_HAND,
+   [16] = _G.INVTYPE_WEAPONMAINHAND,
+   [17] = _G.INVTYPE_WEAPONOFFHAND,
+   [18] = _G.INVTYPE_RANGED,
+};
+function MCF_GetTotalRepairCost()
+    local repair_cost_total = 0;
+
+    for slot_id in pairs(ITEM_SLOTS_WITH_DURABILITY) do
+	    MCF_ScanTooltip:ClearLines();
+	    local repair_item_cost = select(3, MCF_ScanTooltip:SetInventoryItem("player", slot_id));
+
+	    repair_cost_total = repair_cost_total + (repair_item_cost or 0);
+    end
+
+    return repair_cost_total;
+end
+
 ----------------------------------------------------------------------------------
 ------------------------------- SET STAT FUNCTIONS -------------------------------
 ----------------------------------------------------------------------------------
@@ -877,6 +903,38 @@ function MCF_PaperDollFrame_SetMovementSpeed(statFrame, unit)
 	
 	statFrame:SetScript("OnEnter", MCF_MovementSpeed_OnEnter);
 	statFrame:SetScript("OnUpdate", MCF_MovementSpeed_OnUpdate);
+end
+
+function MCF_PaperDollFrame_SetRepairCost(statFrame, unit)
+	if MCF_GetSettings("showRepairCost") == false then
+		statFrame:Hide();
+		return;
+	end
+	
+	if (not unit) then
+		unit = "player";
+	end
+
+	local repairCost = MCF_GetTotalRepairCost();
+	local repairCostShort = repairCost;
+	if repairCost == 0 then
+		statFrame:Hide();
+		return;
+	elseif repairCost > 999999 then
+		repairCostShort = floor((repairCost + 500000) / 1000000) * 1000000;
+	elseif repairCost > 9999 then
+		repairCostShort = floor((repairCost + 5000) / 10000) * 10000;
+	elseif repairCost > 99 then
+		repairCostShort = floor((repairCost + 50) / 100) * 100;
+	end
+	
+	local repairCostString = GetMoneyString(repairCostShort);
+
+	local REPAIR_COST_STR = gsub(REPAIR_COST, ":", "");
+	MCF_PaperDollFrame_SetLabelAndText(statFrame, REPAIR_COST_STR, repairCostString, false);
+	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, REPAIR_COST_STR).." "..GetMoneyString(repairCost)..FONT_COLOR_CODE_CLOSE;
+	statFrame.tooltip2 = L["MCF_STAT_REPAIR"];
+	statFrame:Show();
 end
 
 -- ATTRIBUTES

@@ -1,5 +1,7 @@
 local _, L = ...;
 
+local LibDD = LibStub:GetLibrary("LibUIDropDownMenu-4.0");
+
 ----------------------------------------------------------------------------------
 -------------------------- EQUIPMENT MANAGER FUNCTIONS ---------------------------
 ----------------------------------------------------------------------------------
@@ -171,6 +173,128 @@ function MCF_GearSetDeleteButton_OnClick(self)
 	else
 		UIErrorsFrame:AddMessage(ERR_CLIENT_LOCKED_OUT, 1.0, 0.1, 0.1, 1.0);
 	end
+end
+
+-- Custom C_EquipmentSet functions (default one exist but don't save results)
+local function GetEquipmentSetAssignedSpec(setID)
+	if (not setID) or (not C_EquipmentSet.GetEquipmentSetInfo(setID)) then
+		return;
+	end
+
+	local specIndex = MCF_GetSettings("setSpecs", setID);
+	if specIndex == false then
+		return;
+	else
+		return specIndex;
+	end
+end
+local function AssignSpecToEquipmentSet(setID, specIndex)
+	if (not setID) or (not specIndex) or (not C_EquipmentSet.GetEquipmentSetInfo(setID)) then
+		return;
+	end
+
+	MCF_SetSettings("setSpecs", specIndex, setID);
+end
+local function UnassignEquipmentSetSpec(setID)
+	if not setID then
+		return;
+	end
+
+	MCF_SetSettings("setSpecs", false, setID);
+end
+
+function MCF_GearSetEditButton_OnLoad(self)
+	if not PaperDollFrame.EditButtonDropdown then
+		PaperDollFrame.EditButtonDropdown = LibDD:Create_UIDropDownMenu("GearSetEditButtonDropDown", PaperDollFrame);
+	end
+	self.Dropdown = GearSetEditButtonDropDown;
+	LibDD:UIDropDownMenu_Initialize(self.Dropdown, nil, "MENU");
+	LibDD:UIDropDownMenu_SetInitializeFunction(self.Dropdown, MCF_GearSetEditButtonDropDown_Initialize);
+end
+function MCF_GearSetEditButton_OnMouseDown(self, button)
+	self.texture:SetPoint("TOPLEFT", 1, -1);
+
+	MCF_GearSetButton_OnClick(self:GetParent(), button);
+
+	if ( self.Dropdown.gearSetButton ~= self:GetParent() ) then
+		LibDD:HideDropDownMenu(1);
+		self.Dropdown.gearSetButton = self:GetParent();
+	end
+
+	LibDD:ToggleDropDownMenu(1, nil, self.Dropdown, self, 0, 0);
+end
+function MCF_GearSetEditButtonDropDown_Initialize(dropdownFrame, level, menuList)
+	local gearSetButton = dropdownFrame.gearSetButton;
+	local info = LibDD:UIDropDownMenu_CreateInfo();
+	info.text = EQUIPMENT_SET_EDIT;
+	info.notCheckable = true;
+	info.func = function()
+		MCF_GearManagerDialogPopup:Show();
+		MCF_GearManagerDialogPopup.isEdit = true;
+		MCF_GearManagerDialogPopup.origName = gearSetButton.name;
+		MCF_RecalculateGearManagerDialogPopup(gearSetButton.name, gearSetButton.icon:GetTexture());
+		end;
+	LibDD:UIDropDownMenu_AddButton(info, UIDROPDOWN_MENU_LEVEL);
+
+	info = LibDD:UIDropDownMenu_CreateInfo();
+	info.text = EQUIPMENT_SET_ASSIGN_TO_SPEC;
+	info.isTitle = true;
+	info.notCheckable = true;
+	LibDD:UIDropDownMenu_AddButton(info, UIDROPDOWN_MENU_LEVEL);
+
+	local equipmentSetID = gearSetButton.setID;
+	for i = 1, 3 do
+		info = LibDD:UIDropDownMenu_CreateInfo();
+		info.checked = function()
+			return GetEquipmentSetAssignedSpec(equipmentSetID) == i;
+		end;
+
+		info.func = function()
+			local currentSpecIndex = GetEquipmentSetAssignedSpec(equipmentSetID);
+			if ( currentSpecIndex ~= i ) then
+				AssignSpecToEquipmentSet(equipmentSetID, i);
+			else
+				UnassignEquipmentSetSpec(equipmentSetID);
+			end
+
+			MCF_GearSetButton_UpdateSpecInfo(gearSetButton);
+			MCF_PaperDollEquipmentManagerPane_Update(true);
+		end;
+
+		info.text = select(1, GetTalentTabInfo(i));
+		LibDD:UIDropDownMenu_AddButton(info, UIDROPDOWN_MENU_LEVEL);
+	end
+end
+function MCF_GearSetButton_SetSpecInfo(self, specID)
+	if ( specID and specID > 0 ) then
+		self.specID = specID;
+		--local id, name, description, texture, role, class = GetSpecializationInfoByID(specID);
+		local name, texture, _, _, _ = GetTalentTabInfo(specID);
+		SetPortraitToTexture(self.SpecIcon, texture);
+		self.SpecIcon:Show();
+		self.SpecRing:Show();
+	else
+		self.specID = nil;
+		self.SpecIcon:Hide();
+		self.SpecRing:Hide();
+	end
+
+end
+function MCF_GearSetButton_UpdateSpecInfo(self)
+	if ( not self.setID ) then
+		MCF_GearSetButton_SetSpecInfo(self, nil);
+		return;
+	end
+
+	local specIndex = GetEquipmentSetAssignedSpec(self.setID);
+	if ( not specIndex ) then
+		MCF_GearSetButton_SetSpecInfo(self, nil);
+		return;
+	end
+
+	-- local specID = GetSpecializationInfo(specIndex);
+	local specID = specIndex;
+	MCF_GearSetButton_SetSpecInfo(self, specID);
 end
 
 -- GearSet button scripts
@@ -362,7 +486,8 @@ function MCF_PaperDollEquipmentManagerPane_Update()
 				button.Check:Hide();
 				button.SelectedBar:Hide();
 			end
-			
+			MCF_GearSetButton_UpdateSpecInfo(button);
+
 			if ((i+scrollOffset) == 1) then
 				buttons[i].BgTop:Show();
 				buttons[i].BgMiddle:SetPoint("TOP", buttons[i].BgTop, "BOTTOM");

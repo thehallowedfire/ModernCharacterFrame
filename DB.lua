@@ -60,6 +60,9 @@ MCF_PAPERDOLL_STATINFO = {
 	["MOVESPEED"] = {
 		updateFunc = function(statFrame, unit) MCF_PaperDollFrame_SetMovementSpeed(statFrame, unit); end
 	},
+	["REPAIR"] = {
+		updateFunc = function(statFrame, unit) MCF_PaperDollFrame_SetRepairCost(statFrame, unit); end
+	},
 	
 	-- Base stats
 	["STRENGTH"] = {
@@ -218,6 +221,7 @@ MCF_PAPERDOLL_STATCATEGORIES = {
 				"DRUIDMANA",  -- Only appears for Druids when in bear/cat form
 				"POWER",
 				"ITEMLEVEL",
+				"REPAIR",
 				"MOVESPEED",
 			}
 	},
