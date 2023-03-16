@@ -18,14 +18,12 @@ if (GetLocale() == "frFR") then
     -- OPTIONS FRAME
     -- Please  translate also "Re-skins default Character frame into modern version.", "Version:", "Author:" and your version of "<your language> translation:"
     L["MCF_OPTIONS_DESCRIPTION"] = "Transforme le cadre du personnage par défaut en une version moderne.\n\nVersion: " .. GetAddOnMetadata("ModernCharacterFrame", "Version") .. ".\nAuteur: Профессия — Flamegor (EU).\nTraduction française: Datyb — Auberdine (EU).";
-    -- NEW (delete this line after translation. Also check a few lines at the bottom)
     -- Coloring Item Slots
-    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"] = "Items quality color";
-    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"] = "Show items quality color";
+    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TEXT"] = "Couleur de la qualité d'objet"; -- Items quality color
+    L["MCF_OPTIONS_COLOR_ITEMSLOT_BUTTON_TOOLTIP"] = "Afficher la couleur de la qualité d'objet"; -- Show items quality color
     -- Repair Cost
-    -- NEW - delete this line after translation
-    L["MCF_OPTIONS_REPAIR_BUTTON_TEXT"] = "Repair cost";
-    L["MCF_OPTIONS_REPAIR_BUTTON_TOOLTIP"] = "Show estimated repair cost";
+    L["MCF_OPTIONS_REPAIR_BUTTON_TEXT"] = "Coût de réparation"; -- Repair cost
+    L["MCF_OPTIONS_REPAIR_BUTTON_TOOLTIP"] = "Afficher l'estimation du coùt de reparation"; -- Show estimated repair cost
     -- Taco Tip integration
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE"] = "Score d'équipement de TacoTip";
     L["MCF_OPTIONS_TT_INTEGRATION_TITLE_DISABLED"] = "Score d'équipement de TacoTip "..RED_FONT_COLOR_CODE.."(AddOn n'est pas chargé)"..FONT_COLOR_CODE_CLOSE;
@@ -72,8 +70,7 @@ if (GetLocale() == "frFR") then
     -- General
     L["MCF_STAT_AVERAGE_ITEM_LEVEL_EQUIPPED"] = "(équipé %d)";
     L["MCF_STAT_GEARSCORE"] = "(Gear Score %d)";
-    -- NEW - delete this line after translation
-    L["MCF_STAT_REPAIR"] = "Estimated repair cost (for currently equipped items)."
+    L["MCF_STAT_REPAIR"] = "Estimation du coût de réparation (pour les objets équipés)" -- Estimated repair cost (for currently equipped items).
     -- Attributes
     L["MCF_DEFAULT_STAT1_TOOLTIP"] = "Augmente la puissance d'attaque de %d"; -- "Augmente la puissance d'attaque de %d";
     L["MCF_DEFAULT_STAT2_TOOLTIP"] = "Augmente la chance de coup critique de %.2f%%"; -- "Augmente la chance de coup critique de %.2f%%";
