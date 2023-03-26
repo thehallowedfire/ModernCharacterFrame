@@ -773,17 +773,24 @@ local ITEM_SLOTS_WITH_DURABILITY = {
    [17] = _G.INVTYPE_WEAPONOFFHAND,
    [18] = _G.INVTYPE_RANGED,
 };
-function MCF_GetTotalRepairCost()
+function MCF_GetTotalRepairCostAndDurability()
     local repair_cost_total = 0;
+	local current_durability = 0;
+	local total_durability = 0;
 
     for slot_id in pairs(ITEM_SLOTS_WITH_DURABILITY) do
 	    MCF_ScanTooltip:ClearLines();
 	    local repair_item_cost = select(3, MCF_ScanTooltip:SetInventoryItem("player", slot_id));
-
 	    repair_cost_total = repair_cost_total + (repair_item_cost or 0);
+
+		local current_item_durability, total_item_durability = GetInventoryItemDurability(slot_id);
+		current_durability = current_durability + (current_item_durability or 0);
+		total_durability = total_durability + (total_item_durability or 0);
     end
 
-    return repair_cost_total;
+	local durability_percent = current_durability / total_durability * 100;
+
+    return repair_cost_total, durability_percent;
 end
 
 ----------------------------------------------------------------------------------
@@ -915,7 +922,7 @@ function MCF_PaperDollFrame_SetRepairCost(statFrame, unit)
 		unit = "player";
 	end
 
-	local repairCost = MCF_GetTotalRepairCost();
+	local repairCost, durability_percent = MCF_GetTotalRepairCostAndDurability();
 	local repairCostShort = repairCost;
 	if repairCost == 0 then
 		statFrame:Hide();
@@ -933,7 +940,7 @@ function MCF_PaperDollFrame_SetRepairCost(statFrame, unit)
 	local REPAIR_COST_STR = gsub(REPAIR_COST, ":", "");
 	MCF_PaperDollFrame_SetLabelAndText(statFrame, REPAIR_COST_STR, repairCostString, false);
 	statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, REPAIR_COST_STR).." "..GetMoneyString(repairCost)..FONT_COLOR_CODE_CLOSE;
-	statFrame.tooltip2 = L["MCF_STAT_REPAIR"];
+	statFrame.tooltip2 = L["MCF_STAT_REPAIR"].."\n"..DURABILITY..": "..floor(durability_percent).."%";
 	statFrame:Show();
 end
 
