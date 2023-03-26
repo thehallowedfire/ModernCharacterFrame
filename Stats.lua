@@ -523,7 +523,9 @@ function MCF_CalculateAverageItemLevel()
             itemCount = itemCount + 1;
         end
     end
-    avgItemLevel = sumItemLevel/itemCount;
+	if itemCount ~= 0 then
+    	avgItemLevel = sumItemLevel/itemCount;
+	end
     return avgItemLevel;    
 end
 
@@ -788,7 +790,10 @@ function MCF_GetTotalRepairCostAndDurability()
 		total_durability = total_durability + (total_item_durability or 0);
     end
 
-	local durability_percent = current_durability / total_durability * 100;
+	local durability_percent = 0;
+	if total_durability ~= 0 then
+		durability_percent = current_durability / total_durability * 100;
+	end
 
     return repair_cost_total, durability_percent;
 end
@@ -867,6 +872,10 @@ function MCF_PaperDollFrame_SetItemLevel(statFrame, unit)
     end ]]
 
     local avgItemLevelEquipped = MCF_CalculateAverageItemLevel();
+	if avgItemLevelEquipped == 0 then
+		statFrame:Hide();
+		return;
+	end
     avgItemLevelEquipped = floor(avgItemLevelEquipped);
 
     if ( IsAddOnLoaded("TacoTip") and MCF_GetSettings("TT_IntegrationEnabled") ) then
