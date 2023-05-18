@@ -83,13 +83,13 @@ if (GetLocale() == "frFR") then
     L["MCF_CR_ARMOR_PENETRATION_TOOLTIP"] = "Réduit l'armure de l'ennemi (uniquement pour vos attaques).\nScore de pénétration d'armure : %d (armure de ennemi réduite de %.2f%%).";
     -- Melee
     L["MCF_STAT_TOOLTIP_BONUS_AP"] = "Augmente la puissance d'attaque de %d.\n"
-    L["MCF_STAT_HIT_MELEE_TOOLTIP"] = "Score de toucher %d (+%.2F% chance de toucher)."; -- "Hit rating %d (+%.2f%% hit chance)";
+    L["MCF_STAT_HIT_MELEE_TOOLTIP"] = "Score de toucher %d (+%.2f%% chance de toucher)."; -- "Hit rating %d (+%.2f%% hit chance)";
     L["MCF_CR_CRIT_MELEE_TOOLTIP"] = "Chance des attaques infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";
     -- Ranged
-    L["MCF_STAT_HIT_RANGED_TOOLTIP"] = "Score de toucher %d (+%.2F% chance de toucher)."; -- "Hit rating %d (+%.2f%% hit chance)";
+    L["MCF_STAT_HIT_RANGED_TOOLTIP"] = "Score de toucher %d (+%.2f%% chance de toucher)."; -- "Hit rating %d (+%.2f%% hit chance)";
     L["MCF_CR_CRIT_RANGED_TOOLTIP"] = "Chance des attaques infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";
     -- Spells
-    L["MCF_STAT_HIT_SPELL_TOOLTIP"] = "Score de toucher %d (+%.2F% chance de toucher)."; -- "Hit rating %d (+%.2f%% hit chance)";
+    L["MCF_STAT_HIT_SPELL_TOOLTIP"] = "Score de toucher %d (+%.2f%% chance de toucher)."; -- "Hit rating %d (+%.2f%% hit chance)";
     L["MCF_SPELL_PENETRATION_TOOLTIP"] = "Pénétration des sorts %d (Réduit la résistance adverse de %d)";
     L["MCF_MANA_REGEN_TOOLTIP"] = "%d points de mana régénérés toutes les 5 secondes hors combat.";
     L["MCF_CR_CRIT_SPELL_TOOLTIP"] = "Chance que les sorts infligent des dégâts supplémentaires.\nScore de critique %d (+%.2f%% chance de critique)";

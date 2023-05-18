@@ -70,7 +70,7 @@ if (GetLocale() == "ruRU") then
     -- General
     L["MCF_STAT_AVERAGE_ITEM_LEVEL_EQUIPPED"] = "(Надето %d)";
     L["MCF_STAT_GEARSCORE"] = "(Gear Score %d)";
-    L["MCF_STAT_REPAIR"] = "Стоимость ремонта надетых вещей (приблизительная)."
+    L["MCF_STAT_REPAIR"] = "Стоимость ремонта надетых вещей (приблизительная).";
     -- Attributes
     L["MCF_DEFAULT_STAT1_TOOLTIP"] = "Сила атаки увеличена на %d.";
     L["MCF_DEFAULT_STAT2_TOOLTIP"] = "Повышает вероятность нанести критический удар на %.2f%%.\nУсиливает броню на %d.";
