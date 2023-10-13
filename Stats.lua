@@ -862,21 +862,21 @@ function MCF_PaperDollFrame_SetItemLevel(statFrame, unit)
     end
     _G[statFrame:GetName().."Label"]:SetText(format(STAT_FORMAT, L["MCF_STAT_AVERAGE_ITEM_LEVEL"]));
     local text = _G[statFrame:GetName().."StatText"];
-    --[[ local avgItemLevel, avgItemLevelEquipped = GetAverageItemLevel();
+    local avgItemLevel, avgItemLevelEquipped = GetAverageItemLevel();
     avgItemLevel = floor(avgItemLevel);
     avgItemLevelEquipped = floor(avgItemLevelEquipped);
-    text:SetText(avgItemLevelEquipped .. " / " .. avgItemLevel);
+    --[[ text:SetText(avgItemLevelEquipped .. " / " .. avgItemLevel);
     statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_AVERAGE_ITEM_LEVEL"]).." "..avgItemLevel;
     if (avgItemLevelEquipped ~= avgItemLevel) then
         statFrame.tooltip = statFrame.tooltip .. "  " .. format(L["MCF_STAT_AVERAGE_ITEM_LEVEL_EQUIPPED"], avgItemLevelEquipped);
     end ]]
 
-    local avgItemLevelEquipped = MCF_CalculateAverageItemLevel();
+    --local avgItemLevelEquipped = MCF_CalculateAverageItemLevel();
 	if avgItemLevelEquipped == 0 then
 		statFrame:Hide();
 		return;
 	end
-    avgItemLevelEquipped = floor(avgItemLevelEquipped);
+    --avgItemLevelEquipped = floor(avgItemLevelEquipped);
 
     if ( IsAddOnLoaded("TacoTip") and MCF_GetSettings("TT_IntegrationEnabled") ) then
         local personalGS, _ = TT_GS:GetScore("player");
@@ -900,7 +900,7 @@ function MCF_PaperDollFrame_SetItemLevel(statFrame, unit)
             text:SetText(avgItemLevelEquipped .. " / " .. (colorGS..(personalGS or NOT_APPLICABLE)..FONT_COLOR_CODE_CLOSE));
         end
         statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_AVERAGE_ITEM_LEVEL"]).." "..avgItemLevelEquipped;
-        statFrame.tooltip = statFrame.tooltip .. "  " .. format(L["MCF_STAT_GEARSCORE"], (personalGS or NOT_APPLICABLE));
+        statFrame.tooltip = statFrame.tooltip .. " " .. format(L["MCF_STAT_GEARSCORE"], (personalGS or NOT_APPLICABLE));
     else
         text:SetText(avgItemLevelEquipped);
         statFrame.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, L["MCF_STAT_AVERAGE_ITEM_LEVEL"]).." "..avgItemLevelEquipped;
