@@ -56,13 +56,13 @@ if (GetLocale() == "frFR") then
     L["MCF_STAT_MOVEMENT_SPEED"] = "Vitesse";
     -- Various
     L["MCF_STAT_ATTACK_POWER"] = "Puissance d'attaque";
-    L["MCF_STAT_DPS_SHORT"] = "Dégâts par seconde";
-    L["MCF_WEAPON_SPEED"] = "Vitesse d'attaque";
+    L["MCF_STAT_DPS_SHORT"] = "DPS";
+    L["MCF_WEAPON_SPEED"] = "Vitesse";
     L["MCF_STAT_HASTE"] = "Hâte";
-    L["MCF_STAT_ARMOR_PENETRATION"] = "Pénétration d'armure";
+    L["MCF_STAT_ARMOR_PENETRATION"] = "Pénétration";
     -- Spells
-    L["MCF_SPELL_PENETRATION"] = "Pénétration des sorts";
-    L["MCF_MANA_REGEN"] = "Régénération de mana";
+    L["MCF_SPELL_PENETRATION"] = "Pénétration";
+    L["MCF_MANA_REGEN"] = "Régén. mana";
     -- Defense
     L["MCF_STAT_PARRY"] = "Parade";
 
